@@ -490,28 +490,12 @@ export default function SettingsClient({ orgSettings, metaConnection, userEmail,
           {connected ? (
             /* CONNECTED STATE */
             <div className="space-y-4">
-              {/* Store info */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F5F4] rounded-full border border-[#E7E5E4]">
                   <LinkIcon className="w-3 h-3 text-[#78716C]" strokeWidth={1.5} />
                   <span className="text-xs font-mono text-[#78716C]">{shopifyStatus?.shopDomain}</span>
                 </div>
-                <span className="px-2 py-0.5 text-[11px] font-medium bg-[#F5F5F4] text-[#78716C] rounded border border-[#E7E5E4]">
-                  Custom App
-                </span>
               </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 text-xs text-[#78716C]">
-                <span>📦 Produse importate</span>
-                <span>🕐 Shopify API: v2024-01</span>
-                <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
-                  <span>Webhooks: Activ</span>
-                </div>
-              </div>
-
-              {/* Actions */}
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={handleSync}
@@ -533,51 +517,27 @@ export default function SettingsClient({ orgSettings, metaConnection, userEmail,
             </div>
           ) : (
             /* DISCONNECTED STATE */
-            <div className="space-y-5">
-              {/* Manual token section */}
-              <form onSubmit={handleManualConnect} className="space-y-3">
-                <p className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Conectare manuală</p>
-                <p className="text-xs text-[#78716C]">
-                  Store-ul se conectează direct din interfață, fără secrete Shopify păstrate în variabilele de mediu.
-                </p>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[#78716C]">Shop domain</label>
-                  <input
-                    placeholder="azora.myshopify.com"
-                    value={shopDomain}
-                    onChange={(e) => setShopDomain(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-[#E7E5E4] rounded-lg text-sm text-[#1C1917] placeholder:text-[#78716C] focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[#78716C]">Access token</label>
-                  <input
-                    type="password"
-                    placeholder="shpat_..."
-                    value={accessToken}
-                    onChange={(e) => setAccessToken(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-[#E7E5E4] rounded-lg text-sm text-[#1C1917] placeholder:text-[#78716C] focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[#78716C]">Webhook secret</label>
-                  <input
-                    type="password"
-                    placeholder="orice string aleator"
-                    value={webhookSecret}
-                    onChange={(e) => setWebhookSecret(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-[#E7E5E4] rounded-lg text-sm text-[#1C1917] placeholder:text-[#78716C] focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={connecting || !shopDomain || !accessToken || !webhookSecret}
-                  className="px-4 h-9 bg-[#D4AF37] hover:bg-[#B8971F] text-[#1C1917] text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
-                >
-                  {connecting ? 'Se conectează...' : 'Conectează'}
-                </button>
-              </form>
-            </div>
+            <form onSubmit={(e) => { e.preventDefault(); window.location.href = `/api/shopify/install?shop=${encodeURIComponent(shopDomain)}` }} className="space-y-3">
+              <p className="text-xs text-[#78716C]">
+                Conectează-te cu contul Shopify pentru a importa produse și comenzi.
+              </p>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[#78716C]">Shop domain</label>
+                <input
+                  placeholder="magazin.myshopify.com"
+                  value={shopDomain}
+                  onChange={(e) => setShopDomain(e.target.value)}
+                  className="w-full h-10 px-3 bg-white border border-[#E7E5E4] rounded-lg text-sm text-[#1C1917] placeholder:text-[#78716C] focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!shopDomain}
+                className="px-4 h-9 bg-[#D4AF37] hover:bg-[#B8971F] text-[#1C1917] text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
+              >
+                Conectează cu Shopify
+              </button>
+            </form>
           )}
         </div>
       </div>
