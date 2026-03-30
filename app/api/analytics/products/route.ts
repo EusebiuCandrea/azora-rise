@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
     }
 
     const result = calculateProductProfitability(
-      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
+      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal: 0 },
       costConfig,
       taxConfig,
       { spendEur: 0, spendRon: adsSpendRon, purchases: adsPurchases }

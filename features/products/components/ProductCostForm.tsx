@@ -72,7 +72,7 @@ export function ProductCostForm({ productId, cost, price, orgSettings }: Product
     defaultValues: {
       cogs: cost?.cogs ?? 0,
       supplierVatDeductible: cost?.supplierVatDeductible ?? false,
-      vatRate: cost?.vatRate ?? 0.21,
+      vatRate: cost?.vatRate === 0.19 ? 0.21 : (cost?.vatRate ?? 0.21),
     },
   })
 

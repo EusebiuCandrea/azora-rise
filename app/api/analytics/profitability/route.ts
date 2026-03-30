@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
         }
 
         const result = calculateProductProfitability(
-          { unitsSold, grossRevenue: itemRevenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
+          { unitsSold, grossRevenue: itemRevenue, totalDiscounts: 0, customerShippingTotal: 0 },
           costConfig,
           taxConfig
         )
@@ -96,13 +96,15 @@ export async function GET(req: NextRequest) {
         totalVatDeductible += result.vatDeductibleAmount
       } else {
         totalShopifyFees += itemRevenue * taxConfig.shopifyFeeRate
-        totalVatCollected += itemRevenue * 0.19 / 1.19
+        totalVatCollected += itemRevenue * 0.21 / 1.21
       }
     }
   }
 
   const netRevenue = grossRevenue - refunds
   const grossProfit = netRevenue - totalCogs
+  // TODO (Task 4): replace totalShipping (courier cost) with netTransport once
+  // order.totalShipping is aggregated here, so customer-paid shipping offsets courier cost.
   const operatingProfit = grossProfit - totalShipping - totalPackaging - totalShopifyFees - totalReturnProvision - totalManualExpenses - totalAdsSpend
 
   let incomeTax = 0

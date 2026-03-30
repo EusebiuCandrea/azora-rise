@@ -125,7 +125,7 @@ export default async function ProfitabilityPage({
 
     const cost = product.cost
     const result = calculateProductProfitability(
-      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
+      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal: 0 },
       {
         cogs: cost.cogs,
         supplierVatDeductible: cost.supplierVatDeductible,

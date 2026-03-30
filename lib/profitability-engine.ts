@@ -22,7 +22,6 @@ export interface SalesData {
   grossRevenue: number          // suma prețurilor cu TVA
   totalDiscounts: number
   customerShippingTotal: number   // total shipping paid by customers (sum of order.totalShipping)
-  ordersCount: number             // number of distinct orders (for transport calculation)
 }
 
 export interface AdsData {
@@ -147,18 +146,21 @@ export function calculateProductProfitability(
   // 10. Net profit
   const netProfit = profitAfterAds - incomeTax
 
-  // Marje
-  const grossMarginPct = netRevenue > 0 ? (grossProfit / netRevenue) * 100 : 0
-  const operatingMarginPct = netRevenue > 0 ? (operatingProfit / netRevenue) * 100 : 0
-  const netMarginPct = netRevenue > 0 ? (netProfit / netRevenue) * 100 : 0
+  // Marje — both numerator and denominator use VAT-exclusive values for consistency
+  const grossMarginPct = revenueExVat > 0 ? (grossProfit / revenueExVat) * 100 : 0
+  const operatingMarginPct = revenueExVat > 0 ? (operatingProfit / revenueExVat) * 100 : 0
+  const netMarginPct = revenueExVat > 0 ? (netProfit / revenueExVat) * 100 : 0
 
   // Ads efficiency
   const roas = adsSpendRon > 0 ? netRevenue / adsSpendRon : null
   const costPerPurchase = ads.purchases > 0 ? adsSpendRon / ads.purchases : null
 
   // Break-even
+  // netTransportPerUnit: per-unit share of net transport (customerShipping - courierCost)
+  const netTransportPerUnit = sales.unitsSold > 0 ? netTransport / sales.unitsSold : 0
   const profitPerUnit = avgSellingPrice * (1 - cost.returnRate)
     - cost.cogs * (1 - (tax.isVatPayer && cost.supplierVatDeductible ? effectiveVatRate : 0))
+    + netTransportPerUnit
     - cost.packagingCost
     - avgSellingPrice * tax.shopifyFeeRate * (1 - cost.returnRate)
   const microTaxPerUnit = tax.incomeTaxType !== 'PROFIT_16'

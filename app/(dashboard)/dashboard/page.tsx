@@ -108,7 +108,7 @@ export default async function DashboardPage() {
       if (item.product?.cost) {
         const cost = item.product.cost
         const result = calculateProductProfitability(
-          { unitsSold: item.quantity, grossRevenue: item.price * item.quantity, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
+          { unitsSold: item.quantity, grossRevenue: item.price * item.quantity, totalDiscounts: 0, customerShippingTotal: 0 },
           {
             cogs: cost.cogs,
             supplierVatDeductible: cost.supplierVatDeductible,
@@ -182,7 +182,7 @@ export default async function DashboardPage() {
     .map(({ product, unitsSold, revenue }) => {
       if (unitsSold === 0 || !product.cost) return null
       const result = calculateProductProfitability(
-        { unitsSold, grossRevenue: revenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
+        { unitsSold, grossRevenue: revenue, totalDiscounts: 0, customerShippingTotal: 0 },
         {
           cogs: product.cost.cogs,
           supplierVatDeductible: product.cost.supplierVatDeductible,
