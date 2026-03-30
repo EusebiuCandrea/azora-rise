@@ -1,0 +1,531 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String               @id @default(cuid())
+  email       String               @unique
+  password    String
+  name        String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  memberships OrganizationMember[]
+}
+
+model Organization {
+  id                     String             @id @default(cuid())
+  name                   String
+  slug                   String             @unique
+  incomeTaxType          IncomeTaxType      @default(MICRO_1)
+  shopifyFeeRate         Float              @default(0.02)
+  packagingCostDefault   Float              @default(0)     // RON per produs — pre-completat la produse noi
+  returnRateDefault      Float              @default(0.05)  // % — până la auto-calcul din comenzi
+  shopifyMonthlyFee      Float              @default(140)   // RON/lună — abonament Shopify Basic (~29 USD)
+  packagingMonthlyBudget Float              @default(0)     // RON/lună — buget cumparare ambalaje
+  shippingCostDefault    Float              @default(20)    // RON/comandă — cost transport implicit
+  isVatPayer             Boolean            @default(true)  // firmă plătitoare de TVA
+  ordersLastSyncedAt     DateTime?
+  ordersSyncCursor       String?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  members           OrganizationMember[]
+  shopifyConnection ShopifyConnection?
+  metaConnection    MetaConnection?
+  products          Product[]
+  videoAssets       VideoAsset[]
+  productVideos     ProductVideo[]
+  campaigns         Campaign[]
+  orders            Order[]
+  monthlyExpenses  MonthlyExpense[]
+  productSnapshots ProductProfitabilitySnapshot[]
+  storeSnapshots   StoreProfitabilitySnapshot[]
+  metaMappings     MetaProductMapping[]
+  eurToRonFixed    Float?
+  useFixedRate     Boolean @default(true)
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           MemberRole   @default(VIEWER)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model ShopifyConnection {
+  id                   String       @id @default(cuid())
+  organizationId       String       @unique
+  shopDomain           String
+  accessTokenEncrypted String
+  webhookSecret        String
+  isSyncing            Boolean      @default(false)
+  lastSyncedAt         DateTime?
+  ordersWebhookId      String?
+  isOrdersSyncing      Boolean      @default(false)
+  ordersLastSyncedAt   DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model MetaConnection {
+  id                   String       @id @default(cuid())
+  organizationId       String       @unique
+  adAccountId          String
+  pageId               String?
+  pixelId              String?
+  accessTokenEncrypted String
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id             String        @id @default(cuid())
+  organizationId String
+  shopifyId      String
+  title          String
+  handle         String
+  price          Float
+  compareAtPrice Float?
+  imageUrl       String?
+  status         String        @default("active")
+  shopifyData    Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cost           ProductCost?
+  videos         ProductVideo[]
+  orderItems     OrderItem[]
+  profitSnapshots  ProductProfitabilitySnapshot[]
+  metaMappings     MetaProductMapping[]
+
+  @@unique([organizationId, shopifyId])
+  @@index([organizationId])
+  @@index([organizationId, status])
+}
+
+model ProductCost {
+  id                    String   @id @default(cuid())
+  productId             String   @unique
+  cogs                  Float    @default(0)
+  supplierVatDeductible Boolean  @default(false)
+  vatRate               Float    @default(0.19)
+  returnRate            Float    @default(0.05)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  product               Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductVideo {
+  id             String       @id @default(cuid())
+  productId      String
+  organizationId String
+  template       String
+  status         RenderStatus @default(PENDING)
+  formats        Json?
+  params         Json?
+  renderJobId    String?      // BullMQ job ID from remotion-service
+  outputUrls     Json?        // { "9x16": "r2://...", "4x5": "r2://..." }
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([productId])
+}
+
+model VideoAsset {
+  id              String       @id @default(cuid())
+  organizationId  String
+  filename        String
+  r2Key           String       // e.g. "orgId/assets/file.mp4"
+  assetType       AssetType    @default(VIDEO)
+  sizeBytes       Int?
+  durationSeconds Float?
+  tags            String[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Campaign {
+  id             String            @id @default(cuid())
+  organizationId String
+  metaCampaignId String?           @unique
+  name           String
+  status         CampaignStatus    @default(DRAFT)
+  budget         Float
+  objective      String            @default("OUTCOME_SALES")
+  startDate      DateTime?
+  endDate        DateTime?
+  lastSyncAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  metrics        CampaignMetrics[]
+  adSets         AdSet[]
+  alerts         CampaignAlert[]
+  metaMappings     MetaProductMapping[]
+
+  @@index([organizationId])
+}
+
+model CampaignMetrics {
+  id          String   @id @default(cuid())
+  campaignId  String
+  date        DateTime @db.Date
+  spend       Float    @default(0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  purchases   Int      @default(0)
+  roas        Float?
+  cpm         Float?
+  ctr         Float?
+  createdAt   DateTime @default(now())
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+}
+
+model AdSet {
+  id             String         @id @default(cuid())
+  organizationId String
+  campaignId     String
+  metaAdSetId    String         @unique
+  name           String
+  status         String
+  dailyBudget    Float?
+  targeting      Json?
+  bidStrategy    String?
+  startTime      DateTime?
+  stopTime       DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  campaign       Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ads            Ad[]
+  metrics        AdSetMetrics[]
+
+  @@index([campaignId])
+  @@index([organizationId])
+}
+
+model Ad {
+  id             String      @id @default(cuid())
+  organizationId String
+  adSetId        String
+  metaAdId       String      @unique
+  name           String
+  status         String
+  creativeType   String?
+  creativeUrl    String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  adSet          AdSet       @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  metrics        AdMetrics[]
+
+  @@index([adSetId])
+  @@index([organizationId])
+}
+
+model AdSetMetrics {
+  id          String   @id @default(cuid())
+  adSetId     String
+  date        DateTime @db.Date
+  spend       Float    @default(0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  purchases   Int      @default(0)
+  roas        Float?
+  cpm         Float?
+  ctr         Float?
+  adSet       AdSet    @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+
+  @@unique([adSetId, date])
+  @@index([adSetId])
+}
+
+model AdMetrics {
+  id          String   @id @default(cuid())
+  adId        String
+  date        DateTime @db.Date
+  spend       Float    @default(0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  purchases   Int      @default(0)
+  roas        Float?
+  cpm         Float?
+  ctr         Float?
+  ad          Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@unique([adId, date])
+  @@index([adId])
+}
+
+model CampaignAlert {
+  id             String    @id @default(cuid())
+  organizationId String
+  campaignId     String
+  type           AlertType
+  message        String
+  isRead         Boolean   @default(false)
+  isResolved     Boolean   @default(false)
+  triggeredAt    DateTime  @default(now())
+  resolvedAt     DateTime?
+  metadata       Json?
+  campaign       Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, isRead])
+  @@index([campaignId])
+}
+
+// Subscription model — Phase 6 (SaaS), see spec 2026-03-28-rise-platform-design.md
+// model Subscription { ... }
+
+// ─── Orders — Sub-proiect 3 ────────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(cuid())
+  organizationId  String
+  shopifyOrderId  String      // Shopify numeric ID ca string (e.g. "5123456789")
+  orderNumber     Int         // #1234 — numărul afișat în admin Shopify
+  email           String?
+  phone           String?
+  financialStatus String      // "paid" | "refunded" | "partially_refunded" | "pending"
+  fulfillmentStatus String?   // "fulfilled" | "partial" | "unfulfilled" | null
+  totalPrice      Float       // prețul total al comenzii (cu TVA), RON
+  subtotalPrice   Float       // subtotal fără shipping
+  totalTax        Float       @default(0)
+  totalShipping   Float       @default(0)
+  currency        String      @default("RON")
+  processedAt     DateTime    // când a fost plasată comanda — din Shopify
+  cancelledAt     DateTime?
+  shopifyData     Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+
+  @@unique([organizationId, shopifyOrderId])
+  @@index([organizationId])
+  @@index([organizationId, processedAt])
+  @@index([organizationId, financialStatus])
+}
+
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  organizationId   String
+  productId        String?  // null dacă produsul a fost șters din Shopify
+  shopifyProductId String   // Shopify product ID — pentru matching
+  shopifyVariantId String?  // Shopify variant ID
+  title            String
+  variantTitle     String?
+  sku              String?
+  quantity         Int
+  price            Float    // prețul unitar la momentul comenzii
+  totalDiscount    Float    @default(0)
+  requiresShipping Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([organizationId])
+  @@index([organizationId, shopifyProductId])
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  VIEWER
+}
+
+enum IncomeTaxType {
+  MICRO_1
+  MICRO_3
+  PROFIT_16
+}
+
+enum RenderStatus {
+  PENDING
+  RENDERING
+  DONE
+  FAILED
+}
+
+enum AssetType {
+  VIDEO
+  IMAGE
+  AUDIO
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum AlertType {
+  ROAS_LOW
+  SPEND_EXCEEDED
+  CTR_LOW
+  CPM_HIGH
+  AUTO_PAUSED
+  LEARNING_PHASE
+  BUDGET_ENDING
+}
+
+// ─── Sub-proiect 5: Profitability Engine ──────────────────────────────────────
+
+model MonthlyExpense {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  year           Int
+  month          Int
+  category       ExpenseCategory
+  description    String
+  amount         Float
+  vatDeductible  Boolean         @default(false)
+  vatAmount      Float           @default(0)
+  currency       String          @default("RON")
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([organizationId, year, month, category, description])
+  @@index([organizationId, year, month])
+}
+
+model ProductProfitabilitySnapshot {
+  id                 String              @id @default(cuid())
+  organizationId     String
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  periodStart        DateTime
+  periodEnd          DateTime
+  periodDays         Int
+  unitsSold          Int
+  ordersCount        Int
+  unitsReturned      Int                 @default(0)
+  grossRevenue       Float
+  netRevenue         Float
+  avgSellingPrice    Float
+  totalCogs          Float
+  totalShipping      Float
+  totalPackaging     Float
+  totalShopifyFee    Float
+  returnProvision    Float
+  vatCollected       Float
+  vatDeductible      Float
+  adsSpendRON        Float               @default(0)
+  adsPurchases       Int                 @default(0)
+  adsRoas            Float?
+  grossProfit        Float
+  operatingProfit    Float
+  incomeTax          Float
+  netProfit          Float
+  marginPct          Float
+  recommendation     RecommendationType?
+  recommendationNote String?
+  calculatedAt       DateTime            @default(now())
+  isStale            Boolean             @default(false)
+
+  @@unique([organizationId, productId, periodStart, periodEnd])
+  @@index([organizationId, periodStart])
+  @@index([organizationId, marginPct])
+}
+
+model StoreProfitabilitySnapshot {
+  id                   String       @id @default(cuid())
+  organizationId       String
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  year                 Int
+  month                Int
+  grossRevenue         Float
+  refunds              Float        @default(0)
+  netRevenue           Float
+  totalCogs            Float
+  totalShipping        Float
+  totalPackaging       Float
+  totalShopifyFees     Float
+  totalAdsSpend        Float        @default(0)
+  totalAdsPurchases    Int          @default(0)
+  totalManualExpenses  Float        @default(0)
+  totalReturnProvision Float        @default(0)
+  totalVatCollected    Float        @default(0)
+  totalVatDeductible   Float        @default(0)
+  grossProfit          Float
+  operatingProfit      Float
+  incomeTax            Float
+  netProfit            Float
+  netMarginPct         Float
+  prevMonthNetProfit   Float?
+  growthPct            Float?
+  calculatedAt         DateTime     @default(now())
+
+  @@unique([organizationId, year, month])
+}
+
+model MetaProductMapping {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campaignId     String
+  campaign       Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mappingType    MappingType
+  confidence     Float        @default(1.0)
+  matchPattern   String?
+  createdAt      DateTime     @default(now())
+  createdBy      String
+
+  @@unique([campaignId, productId])
+  @@index([organizationId, productId])
+}
+
+enum ExpenseCategory {
+  RENT
+  SALARY
+  COURIER
+  SOFTWARE
+  MARKETING_OTHER
+  ACCOUNTING
+  BANK_FEES
+  OTHER
+}
+
+enum RecommendationType {
+  SCALE_UP
+  MONITOR
+  REVIEW_COSTS
+  KILL_ADS
+  DEAD_STOCK
+  BREAK_EVEN
+}
+
+enum MappingType {
+  MANUAL
+  UTM_AUTO
+  NAME_PATTERN
+  AI_SUGGESTED
+}
