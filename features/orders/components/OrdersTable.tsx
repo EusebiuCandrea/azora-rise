@@ -26,8 +26,11 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   partially_refunded: { bg: '#FFF7ED', text: '#D97706', label: 'Parțial rambursat' },
   refunded: { bg: '#FEF2F2', text: '#DC2626', label: 'Rambursat' },
   pending: { bg: '#F5F5F4', text: '#78716C', label: 'În așteptare' },
-  cancelled: { bg: '#F5F5F4', text: '#78716C', label: 'Anulat' },
+  cancelled: { bg: '#FEF2F2', text: '#DC2626', label: 'Anulat' },
+  voided: { bg: '#FEF2F2', text: '#DC2626', label: 'Stornat' },
 }
+
+const VOIDED_STATUSES = new Set(['voided', 'cancelled'])
 
 const FULFILLMENT_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   fulfilled: { bg: '#DCFCE7', text: '#15803D', label: 'Livrat' },
@@ -78,7 +81,7 @@ export function OrdersTable({ orders }: Props) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  {order.fulfillmentStatus ? (
+                  {order.fulfillmentStatus && !VOIDED_STATUSES.has(order.financialStatus) ? (
                     <span
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                       style={{ background: fulfillmentStyle.bg, color: fulfillmentStyle.text }}
