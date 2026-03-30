@@ -72,7 +72,7 @@ export function ProductCostForm({ productId, cost, price, orgSettings }: Product
     defaultValues: {
       cogs: cost?.cogs ?? 0,
       supplierVatDeductible: cost?.supplierVatDeductible ?? false,
-      vatRate: cost?.vatRate ?? 0.19,
+      vatRate: cost?.vatRate ?? 0.21,
     },
   })
 
@@ -82,7 +82,7 @@ export function ProductCostForm({ productId, cost, price, orgSettings }: Product
   const cogs = Number(values.cogs) || 0
   const shipping = orgSettings.shippingCostDefault
   const packaging = orgSettings.packagingCostDefault
-  const vatRate = Number(values.vatRate) || 0.19
+  const vatRate = Number(values.vatRate) || 0.21
   const supplierVatDeductible = values.supplierVatDeductible ?? false
 
   // Use org-level defaults
@@ -159,8 +159,10 @@ export function ProductCostForm({ productId, cost, price, orgSettings }: Product
                 {...form.register('vatRate')}
                 className="w-full h-10 px-3 bg-white border border-[#E7E5E4] rounded-lg text-sm text-[#1C1917] focus:outline-none focus:border-[#D4AF37] appearance-none"
               >
-                <option value={0.19}>19%</option>
+                <option value={0.21}>21%</option>
+                <option value={0.19}>19% (pre-2026)</option>
                 <option value={0.09}>9%</option>
+                <option value={0.05}>5%</option>
                 <option value={0}>0%</option>
               </select>
             </div>

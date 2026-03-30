@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, { params }: Props) {
     : {
         cogs: 0,
         supplierVatDeductible: false,
-        vatRate: 0.19,
+        vatRate: 0.21,
         returnRate: 0.05,
       }
 
@@ -87,6 +87,7 @@ export async function GET(req: NextRequest, { params }: Props) {
   return NextResponse.json({
     perUnit: {
       ...perUnitCalc,
+      vatRateUsed: costInput.vatRate,
       shippingCostDisplay: orgSettings.shippingCost,
       packagingCostDisplay: orgSettings.packagingCost,
     },

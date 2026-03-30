@@ -118,7 +118,7 @@ export function ProfitabilityTab({ productId, price, hasCost }: Props) {
         </div>
         <div className="divide-y divide-[#E7E5E4]">
           <ProfitRow label="Preț vânzare (brut)" value={perUnit.revenueBrut} />
-          <ProfitRow label="— TVA colectată (19%)" value={-perUnit.breakdowns.vatCollected} isDeduction />
+          <ProfitRow label={`— TVA colectată (${Math.round((perUnit.vatRateUsed ?? 0.21) * 100)}%)`} value={-perUnit.breakdowns.vatCollected} isDeduction />
           <ProfitRow label="= Venit net (fără TVA)" value={perUnit.revenueNet} isSubtotal />
           <ProfitRow label="— COGS net" value={-perUnit.cogsNet} isDeduction />
           <ProfitRow label="— Transport" value={-(perUnit.shippingCostDisplay ?? 0)} isDeduction />

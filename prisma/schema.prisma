@@ -122,7 +122,7 @@ model ProductCost {
   productId             String   @unique
   cogs                  Float    @default(0)
   supplierVatDeductible Boolean  @default(false)
-  vatRate               Float    @default(0.19)
+  vatRate               Float    @default(0.21)
   returnRate            Float    @default(0.05)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
