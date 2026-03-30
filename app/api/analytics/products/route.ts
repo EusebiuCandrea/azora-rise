@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     incomeTaxType: org.incomeTaxType as 'MICRO_1' | 'MICRO_3' | 'PROFIT_16',
     shopifyFeeRate: org.shopifyFeeRate,
     eurToRon,
+    isVatPayer: org.isVatPayer,
   }
 
   // Fetch products with order items in period
@@ -118,7 +119,7 @@ export async function GET(req: NextRequest) {
     }
 
     const result = calculateProductProfitability(
-      { unitsSold, grossRevenue, totalDiscounts: 0 },
+      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
       costConfig,
       taxConfig,
       { spendEur: 0, spendRon: adsSpendRon, purchases: adsPurchases }

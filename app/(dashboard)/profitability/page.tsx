@@ -51,6 +51,7 @@ export default async function ProfitabilityPage({
     incomeTaxType: org.incomeTaxType as 'MICRO_1' | 'MICRO_3' | 'PROFIT_16',
     shopifyFeeRate: org.shopifyFeeRate,
     eurToRon,
+    isVatPayer: org.isVatPayer,
   }
 
   const [products, campaignMetricsAgg] = await Promise.all([
@@ -124,7 +125,7 @@ export default async function ProfitabilityPage({
 
     const cost = product.cost
     const result = calculateProductProfitability(
-      { unitsSold, grossRevenue, totalDiscounts: 0 },
+      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
       {
         cogs: cost.cogs,
         supplierVatDeductible: cost.supplierVatDeductible,
@@ -212,7 +213,7 @@ export default async function ProfitabilityPage({
   return (
     <div className="max-w-[1200px] space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold text-[#1C1917]">Profitabilitate</h1>
           <p className="text-sm text-[#78716C] mt-0.5">Ultimele {days} zile · date calculate din comenzi Shopify + costuri configurate</p>
@@ -235,7 +236,7 @@ export default async function ProfitabilityPage({
       </div>
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 shadow-sm">
           <p className="text-xs font-medium text-[#78716C] uppercase tracking-wide">Revenue net</p>
           <p className="text-[26px] font-bold text-[#1C1917] mt-2 leading-none">

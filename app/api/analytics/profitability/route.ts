@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     incomeTaxType: org.incomeTaxType as 'MICRO_1' | 'MICRO_3' | 'PROFIT_16',
     shopifyFeeRate: org.shopifyFeeRate,
     eurToRon,
+    isVatPayer: org.isVatPayer,
   }
 
   // All paid orders this month
@@ -81,7 +82,7 @@ export async function GET(req: NextRequest) {
         }
 
         const result = calculateProductProfitability(
-          { unitsSold, grossRevenue: itemRevenue, totalDiscounts: 0 },
+          { unitsSold, grossRevenue: itemRevenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
           costConfig,
           taxConfig
         )

@@ -39,6 +39,7 @@ export default async function DashboardPage() {
     incomeTaxType: org.incomeTaxType as 'MICRO_1' | 'MICRO_3' | 'PROFIT_16',
     shopifyFeeRate: org.shopifyFeeRate,
     eurToRon,
+    isVatPayer: org.isVatPayer,
   }
 
   const [orders, prevOrders, campaignMetrics, prevCampaignMetrics, manualExpenses, activeCampaigns, orderItemsInPeriod] =
@@ -107,7 +108,7 @@ export default async function DashboardPage() {
       if (item.product?.cost) {
         const cost = item.product.cost
         const result = calculateProductProfitability(
-          { unitsSold: item.quantity, grossRevenue: item.price * item.quantity, totalDiscounts: 0 },
+          { unitsSold: item.quantity, grossRevenue: item.price * item.quantity, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
           {
             cogs: cost.cogs,
             supplierVatDeductible: cost.supplierVatDeductible,
@@ -181,7 +182,7 @@ export default async function DashboardPage() {
     .map(({ product, unitsSold, revenue }) => {
       if (unitsSold === 0 || !product.cost) return null
       const result = calculateProductProfitability(
-        { unitsSold, grossRevenue: revenue, totalDiscounts: 0 },
+        { unitsSold, grossRevenue: revenue, totalDiscounts: 0, customerShippingTotal: 0, ordersCount: 0 },
         {
           cogs: product.cost.cogs,
           supplierVatDeductible: product.cost.supplierVatDeductible,
@@ -252,7 +253,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 max-w-[1200px]">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold text-[#1C1917]">Panou de control</h1>
           <p className="text-sm text-[#78716C] mt-0.5 capitalize">
@@ -269,7 +270,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 shadow-sm">
           <p className="text-xs font-medium text-[#78716C] uppercase tracking-wide">Vânzări totale</p>
           <p className="text-[28px] font-bold text-[#1C1917] mt-2 leading-none">
@@ -326,7 +327,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Middle row: top products + active campaigns */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1.4fr' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-4">
         <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-[#1C1917] mb-4">Top produse după profit</h2>
           {productProfits.length === 0 ? (
@@ -369,6 +370,7 @@ export default async function DashboardPage() {
               </Link>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-[#F5F5F4]">
@@ -425,6 +427,7 @@ export default async function DashboardPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
           <div className="px-5 py-3 border-t border-[#E7E5E4] flex justify-end">
             <Link href="/campaigns" className="text-xs text-[#D4AF37] hover:underline flex items-center gap-1">
@@ -440,7 +443,7 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold text-[#1C1917] mb-4">
             Waterfall profitabilitate — {monthName}
           </h2>
-          <div className="grid grid-cols-2 gap-x-12 gap-y-1.5 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-1.5 text-sm">
             {[
               { label: 'Revenue brut', value: grossRevenue, color: '#16A34A', plus: true },
               { label: 'COGS (cost marfă)', value: -totalCogs, color: '#DC2626' },

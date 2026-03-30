@@ -14,12 +14,15 @@ export interface OrganizationTaxConfig {
   incomeTaxType: 'MICRO_1' | 'MICRO_3' | 'PROFIT_16'
   shopifyFeeRate: number        // ex: 0.02 = 2%
   eurToRon: number              // cursul de schimb aplicabil
+  isVatPayer: boolean
 }
 
 export interface SalesData {
   unitsSold: number
   grossRevenue: number          // suma prețurilor cu TVA
   totalDiscounts: number
+  customerShippingTotal: number   // total shipping paid by customers (sum of order.totalShipping)
+  ordersCount: number             // number of distinct orders (for transport calculation)
 }
 
 export interface AdsData {
@@ -46,9 +49,10 @@ export interface ProductProfitabilityResult {
   vatDeductibleAmount: number   // totalCogs × vatRate (dacă deductibil)
 
   returnProvision: number       // returnsEstimate × cogs × 0.5
+  netTransport: number           // customerShipping - courierCost (can be +/0/-)
 
-  grossProfit: number           // netRevenue - cogsNet
-  operatingProfit: number       // grossProfit - shipping - packaging - shopifyFee - returnProvision
+  grossProfit: number           // revenueExVat - cogsNet + netTransport - packaging - shopifyFee
+  operatingProfit: number       // grossProfit - returnProvision
 
   adsSpendRon: number
   profitAfterAds: number        // operatingProfit - adsSpendRon
@@ -72,14 +76,15 @@ export interface ProductProfitabilityResult {
  *
  * FORMULA:
  * 1. netRevenue = grossRevenue - (unitsSold × returnRate × avgPrice)
- * 2. vatCollected = netRevenue × vatRate / (1 + vatRate)
- * 3. cogsNet = unitsSold × cogs × (1 - vatRate if deductible)
- * 4. grossProfit = netRevenue - cogsNet
- * 5. returnProvision = returnsEstimate × cogs × 0.5
- * 6. operatingProfit = grossProfit - shipping - packaging - shopifyFee - returnProvision
- * 7. profitAfterAds = operatingProfit - adsSpendRon
- * 8. incomeTax: MICRO_1/3 = netRevenue × rate; PROFIT_16 = max(0, profitAfterAds) × 0.16
- * 9. netProfit = profitAfterAds - incomeTax
+ * 2. vatCollected = netRevenue × vatRate / (1 + vatRate) — DOAR dacă isVatPayer
+ * 3. cogsNet = unitsSold × cogs × (1 - vatRate if deductible and isVatPayer)
+ * 4. netTransport = customerShippingTotal - (unitsSold × shippingCost)
+ * 5. grossProfit = revenueExVat - cogsNet + netTransport - packaging - shopifyFee
+ * 6. returnProvision = returnsEstimate × cogs × 0.5
+ * 7. operatingProfit = grossProfit - returnProvision
+ * 8. profitAfterAds = operatingProfit - adsSpendRon
+ * 9. incomeTax: MICRO_1/3 = netRevenue × rate; PROFIT_16 = max(0, profitAfterAds) × 0.16
+ * 10. netProfit = profitAfterAds - incomeTax
  */
 export function calculateProductProfitability(
   sales: SalesData,
@@ -94,33 +99,42 @@ export function calculateProductProfitability(
   const returnedRevenue = returnsEstimate * avgSellingPrice
   const netRevenue = sales.grossRevenue - returnedRevenue
 
-  // 2. TVA colectat
-  const vatCollected = netRevenue * cost.vatRate / (1 + cost.vatRate)
-  const revenueExVat = netRevenue / (1 + cost.vatRate)
+  // 2. TVA colectat — DOAR dacă firma e plătitoare TVA
+  const effectiveVatRate = tax.isVatPayer ? cost.vatRate : 0
+  const vatCollected = netRevenue * effectiveVatRate / (1 + effectiveVatRate)
+  const revenueExVat = tax.isVatPayer ? netRevenue / (1 + effectiveVatRate) : netRevenue
 
   // 3. Costuri directe
   const totalCogs = sales.unitsSold * cost.cogs
-  const totalShipping = sales.unitsSold * cost.shippingCost
   const totalPackaging = sales.unitsSold * cost.packagingCost
   const totalShopifyFee = netRevenue * tax.shopifyFeeRate
-  const vatDeductibleAmount = cost.supplierVatDeductible ? totalCogs * cost.vatRate : 0
+
+  // TVA furnizor deductibil DOAR dacă firma e plătitoare TVA
+  const vatDeductibleAmount = (tax.isVatPayer && cost.supplierVatDeductible)
+    ? totalCogs * effectiveVatRate
+    : 0
   const cogsNet = totalCogs - vatDeductibleAmount
 
-  // 4. Gross profit
-  const grossProfit = netRevenue - cogsNet
+  // 4. Transport net — diferența dintre ce plătește clientul și costul curierului
+  const totalCourierCost = sales.unitsSold * cost.shippingCost
+  // customerShippingTotal = suma totalShipping din comenzi pentru acest produs
+  // Dacă livrarea e gratuită pentru client, customerShippingTotal = 0 → netTransport = -courier
+  const netTransport = sales.customerShippingTotal - totalCourierCost
 
-  // 5. Return provision (50% din costul mărfii returnate — pierdere parțială)
+  // 5. Gross profit — transport net (nu courier cost)
+  const grossProfit = revenueExVat - cogsNet + netTransport - totalPackaging - totalShopifyFee
+
+  // 6. Return provision
   const returnProvision = returnsEstimate * cost.cogs * 0.5
 
-  // 6. Operating profit
-  const operatingProfit = grossProfit - totalShipping - totalPackaging - totalShopifyFee - returnProvision
+  // 7. Operating profit
+  const operatingProfit = grossProfit - returnProvision
 
-  // 7. Profit after ads
+  // 8. Profit after ads
   const adsSpendRon = ads.spendRon > 0 ? ads.spendRon : ads.spendEur * tax.eurToRon
   const profitAfterAds = operatingProfit - adsSpendRon
 
-  // 8. Income tax
-  // CRITIC: microimpozit se calculează pe REVENUE, nu pe profit!
+  // 9. Income tax
   let incomeTax = 0
   if (tax.incomeTaxType === 'MICRO_1') {
     incomeTax = netRevenue * 0.01
@@ -130,7 +144,7 @@ export function calculateProductProfitability(
     incomeTax = Math.max(0, profitAfterAds) * 0.16
   }
 
-  // 9. Net profit
+  // 10. Net profit
   const netProfit = profitAfterAds - incomeTax
 
   // Marje
@@ -144,8 +158,7 @@ export function calculateProductProfitability(
 
   // Break-even
   const profitPerUnit = avgSellingPrice * (1 - cost.returnRate)
-    - cost.cogs * (1 - (cost.supplierVatDeductible ? cost.vatRate : 0))
-    - cost.shippingCost
+    - cost.cogs * (1 - (tax.isVatPayer && cost.supplierVatDeductible ? effectiveVatRate : 0))
     - cost.packagingCost
     - avgSellingPrice * tax.shopifyFeeRate * (1 - cost.returnRate)
   const microTaxPerUnit = tax.incomeTaxType !== 'PROFIT_16'
@@ -164,11 +177,12 @@ export function calculateProductProfitability(
     vatCollected,
     revenueExVat,
     totalCogs,
-    totalShipping,
+    totalShipping: totalCourierCost,
     totalPackaging,
     totalShopifyFee,
     vatDeductibleAmount,
     returnProvision,
+    netTransport,
     grossProfit,
     operatingProfit,
     adsSpendRon,
