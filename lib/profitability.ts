@@ -12,9 +12,10 @@ export interface ProductCostInput {
 export interface OrgSettings {
   shopifyFeeRate: number   // 0.02 = 2%
   incomeTaxType: IncomeTaxType
-  shippingCost: number      // din Organization.shippingCostDefault
+  shippingCost: number      // courier cost (what seller pays)
   packagingCost: number     // din Organization.packagingCostDefault
   isVatPayer: boolean       // firmă plătitoare de TVA
+  netTransportPerUnit?: number  // override: customerShipping - courierCost per unit
 }
 
 export interface ProfitabilityResult {
@@ -22,6 +23,7 @@ export interface ProfitabilityResult {
   revenueNet: number            // fără TVA colectată
   cogsNet: number               // COGS după deducere TVA furnizor (dacă aplicabil)
   shopifyFee: number            // taxa Shopify
+  netTransport: number          // transport net per unitate (customerShipping - courierCost)
   grossProfit: number           // profit brut înainte de provizion retururi
   returnsProvision: number      // provizion retururi
   profitPreTax: number          // profit înainte de impozit
@@ -65,25 +67,30 @@ export function calculateProductProfitability(
   // 3. Taxa Shopify — aplicată pe prețul brut
   const shopifyFee = price * shopifyFeeRate
 
-  // 4. Profit brut — shipping și packaging vin din org settings
-  const grossProfit = revenueNet - cogsNet - orgSettings.shippingCost - orgSettings.packagingCost - shopifyFee
+  // 4. Transport net — pozitiv dacă clientul plătește mai mult decât costul curier, negativ altfel
+  const netTransport = orgSettings.netTransportPerUnit !== undefined
+    ? orgSettings.netTransportPerUnit
+    : -orgSettings.shippingCost
 
-  // 5. Provizion retururi
+  // 5. Profit brut — transport net și packaging vin din org settings
+  const grossProfit = revenueNet - cogsNet + netTransport - orgSettings.packagingCost - shopifyFee
+
+  // 6. Provizion retururi
   const returnsProvision = grossProfit * returnRate
 
-  // 6. Profit înainte de impozit
+  // 7. Profit înainte de impozit
   const profitPreTax = grossProfit - returnsProvision
 
-  // 7. Impozit
+  // 8. Impozit
   const taxAmount = calculateTax(incomeTaxType, revenueBrut, profitPreTax)
 
-  // 8. Profit net
+  // 9. Profit net
   const profitNet = profitPreTax - taxAmount
 
-  // 9. Marjă
+  // 10. Marjă
   const profitMargin = (profitNet / revenueBrut) * 100
 
-  // 10. Rata efectivă de impozitare
+  // 11. Rata efectivă de impozitare
   const effectiveTaxRate = revenueBrut > 0 ? (taxAmount / revenueBrut) * 100 : 0
 
   return {
@@ -91,6 +98,7 @@ export function calculateProductProfitability(
     revenueNet,
     cogsNet,
     shopifyFee,
+    netTransport,
     grossProfit,
     returnsProvision,
     profitPreTax,
