@@ -142,7 +142,7 @@ export function ProfitabilityTab({ productId, price, hasCost, isVatPayer }: Prop
             value={perUnit.netTransportPerUnit ?? 0}
           />
           <ProfitRow label="— Ambalaj" value={-(perUnit.packagingCostDisplay ?? 0)} isDeduction />
-          <ProfitRow label={`— Taxă Shopify (${((perUnit.shippingCostDisplay ?? 2)).toFixed(0)}%)`} value={-perUnit.shopifyFee} isDeduction />
+          <ProfitRow label={`— Taxă Shopify (${perUnit.shopifyFeeRatePct ?? 2}%)`} value={-perUnit.shopifyFee} isDeduction />
           <ProfitRow label="= Profit brut" value={perUnit.grossProfit} isSubtotal />
           <ProfitRow label="— Provizion retururi" value={-perUnit.returnsProvision} isDeduction />
           {hasAds && (

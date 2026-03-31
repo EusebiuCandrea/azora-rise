@@ -148,6 +148,7 @@ export async function GET(req: NextRequest, { params }: Props) {
       vatRateUsed: costInput.vatRate,
       shippingCostDisplay: org.shippingCostDefault,
       packagingCostDisplay: org.packagingCostDefault,
+      shopifyFeeRatePct: Math.round(org.shopifyFeeRate * 100),
       netTransportPerUnit,
       adsSpendPerUnit: totalQuantitySold > 0 ? adsSpendRon / totalQuantitySold : 0,
     },
