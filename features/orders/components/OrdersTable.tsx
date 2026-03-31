@@ -41,6 +41,7 @@ const FULFILLMENT_STYLES: Record<string, { bg: string; text: string; label: stri
 export function OrdersTable({ orders }: Props) {
   return (
     <div className="bg-white border border-[#E7E5E4] rounded-xl overflow-hidden">
+      <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-[#E7E5E4] bg-[#FAFAF9]">
@@ -111,6 +112,7 @@ export function OrdersTable({ orders }: Props) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

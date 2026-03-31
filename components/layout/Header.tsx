@@ -1,15 +1,27 @@
-import { Bell, HelpCircle, RefreshCw, Search } from 'lucide-react'
+'use client'
+
+import { Bell, HelpCircle, Menu, RefreshCw, Search } from 'lucide-react'
 import Link from 'next/link'
 
 interface HeaderProps {
   userEmail?: string
+  onMenuToggle?: () => void
 }
 
-export function Header({ userEmail }: HeaderProps) {
+export function Header({ userEmail, onMenuToggle }: HeaderProps) {
   const initials = userEmail ? userEmail.slice(0, 2).toUpperCase() : 'AZ'
 
   return (
-    <header className="h-14 border-b border-[#E7E5E4] bg-white flex items-center gap-4 px-6 flex-shrink-0">
+    <header className="h-14 border-b border-[#E7E5E4] bg-white flex items-center gap-3 px-4 md:px-6 flex-shrink-0">
+      {/* Hamburger — mobile only */}
+      <button
+        onClick={onMenuToggle}
+        className="lg:hidden p-2 rounded-lg text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917] transition-colors -ml-1"
+        aria-label="Deschide meniu"
+      >
+        <Menu className="w-5 h-5" strokeWidth={1.5} />
+      </button>
+
       {/* Search bar */}
       <div className="flex-1 max-w-xs relative">
         <Search
@@ -26,7 +38,7 @@ export function Header({ userEmail }: HeaderProps) {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Sync chip */}
+      {/* Sync chip — hidden on mobile */}
       <Link
         href="/settings"
         className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-full text-xs text-[#78716C] hover:border-[#D4AF37] hover:text-[#1C1917] transition-colors"
@@ -40,10 +52,9 @@ export function Header({ userEmail }: HeaderProps) {
         <button className="p-2 rounded-lg text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917] transition-colors">
           <Bell className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        <button className="p-2 rounded-lg text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917] transition-colors">
+        <button className="hidden sm:flex p-2 rounded-lg text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917] transition-colors">
           <HelpCircle className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        {/* Profile avatar */}
         <button className="w-8 h-8 rounded-full bg-[#D4AF37] flex items-center justify-center ml-1">
           <span className="text-xs font-bold text-[#1C1917]">{initials}</span>
         </button>

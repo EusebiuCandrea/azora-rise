@@ -15,6 +15,7 @@ import {
   Plus,
   ShoppingBag,
   TrendingUp,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -68,9 +69,11 @@ const navSections: NavSection[] = [
 
 interface SidebarProps {
   userEmail?: string
+  mobileOpen?: boolean
+  onClose?: () => void
 }
 
-export function Sidebar({ userEmail }: SidebarProps) {
+export function Sidebar({ userEmail, mobileOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname()
 
   function isActive(href: string) {
@@ -83,13 +86,29 @@ export function Sidebar({ userEmail }: SidebarProps) {
     : 'AZ'
 
   return (
-    <aside className="w-60 min-h-screen bg-white border-r border-[#E7E5E4] flex flex-col flex-shrink-0">
-      {/* Logo */}
-      <div className="px-5 py-4 border-b border-[#E7E5E4]">
+    <aside
+      className={cn(
+        'w-60 bg-white border-r border-[#E7E5E4] flex flex-col flex-shrink-0',
+        // Mobile: fixed overlay, slides in/out
+        'fixed inset-y-0 left-0 z-30 transition-transform duration-300 ease-in-out',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        // Desktop: normal flow, always visible
+        'lg:relative lg:inset-auto lg:z-auto lg:translate-x-0 lg:min-h-screen',
+      )}
+    >
+      {/* Logo + mobile close */}
+      <div className="px-5 py-4 border-b border-[#E7E5E4] flex items-center justify-between">
         <div className="flex items-baseline gap-1">
           <span className="text-lg font-bold text-[#1C1917] tracking-tight">Rise</span>
           <span className="text-xs text-[#78716C]">· Azora</span>
         </div>
+        <button
+          onClick={onClose}
+          className="lg:hidden p-1 rounded text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F5F4] transition-colors"
+          aria-label="Închide meniu"
+        >
+          <X className="w-4 h-4" strokeWidth={1.5} />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -107,6 +126,7 @@ export function Sidebar({ userEmail }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onClose}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors relative',
                       active
@@ -137,6 +157,7 @@ export function Sidebar({ userEmail }: SidebarProps) {
       <div className="px-3 pb-3">
         <Link
           href="/listing"
+          onClick={onClose}
           className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[#D4AF37] hover:bg-[#B8971F] text-[#1C1917] font-semibold text-sm rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" strokeWidth={2} />
@@ -147,15 +168,12 @@ export function Sidebar({ userEmail }: SidebarProps) {
       {/* User section */}
       <div className="px-3 pb-4 pt-2 border-t border-[#E7E5E4]">
         <div className="flex items-center gap-2.5 px-2 py-2">
-          {/* Avatar */}
           <div className="w-7 h-7 rounded-full bg-[#D4AF37] flex items-center justify-center flex-shrink-0">
             <span className="text-[10px] font-bold text-[#1C1917]">{initials}</span>
           </div>
-          {/* Email */}
           <span className="text-xs text-[#78716C] truncate flex-1 min-w-0">
-            {userEmail ?? 'eusebiu@azora.ro'}
+            {userEmail ?? ''}
           </span>
-          {/* Logout */}
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="p-1 rounded text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F5F4] transition-colors flex-shrink-0"

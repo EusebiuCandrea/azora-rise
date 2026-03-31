@@ -1,0 +1,887 @@
+Prompt Google Stitch — Rise Platform UI (Complet)                                                                                                                                             
+                                                                                                                                                                                                
+  Design a clean, light-themed SaaS dashboard called "Rise" for Azora.ro, a                                                                                                                     
+  Romanian e-commerce brand. Rise is an AI-powered internal platform covering                                                                                                                   
+  4 areas: product profitability tracking, AI-powered product listing creation,                                                                                                                 
+  video ad creation with Remotion preview, and Meta Ads campaign management.                                                                                                                    
+                                                                                                                                                                                                
+  Design 16 screens total. All screens share the same layout and design system.                                                                                                                 
+                                                                                                                                                                                                
+  ===================================================================                                                                                                                           
+  BRAND & DESIGN SYSTEM                                                    
+  ===================================================================                                                                                                                           
+                                                                           
+  NAME: Rise by Azora                          
+  FONT: Inter — headings 600-700, body 400, labels 500
+  BORDER RADIUS: 8px cards/inputs/buttons, 4px tags/badges                                                                                                                                      
+  SHADOW: 0 1px 3px rgba(0,0,0,0.08) cards, 0 4px 16px rgba(0,0,0,0.10) modals                                                                                                                  
+  ICONS: Lucide style — 20px, stroke 1.5px                                                                                                                                                      
+                                                                                                                                                                                                
+  COLOR PALETTE (light theme, warm neutrals + gold accent):                                                                                                                                     
+                                                                                                                                                                                                
+    Background page:    #FAFAF9  warm off-white                                                                                                                                                 
+    Sidebar:            #FFFFFF  white, right border 1px #E7E5E4           
+    Card / Surface:     #FFFFFF  white                                                                                                                                                          
+    Muted surface:      #F5F5F4  inputs, hover, secondary bg                                                                                                                                    
+    Border:             #E7E5E4  all dividers and card borders                                                                                                                                  
+    Primary action:     #292524  dark warm charcoal (buttons, active nav)                                                                                                                       
+    Primary hover:      #44403C                                                                                                                                                                 
+    Brand accent gold:  #D4AF37  badges, focus rings, active underlines, CTA                                                                                                                    
+    Accent hover:       #B8971F                                                                                                                                                                 
+    Gold tint bg:       #FFFBEB  soft gold background for highlights                                                                                                                            
+    Text primary:       #1C1917  near-black warm                                                                                                                                                
+    Text muted:         #78716C  secondary text, placeholders                                                                                                                                   
+    Success:            #16A34A  / bg #DCFCE7 / border #BBF7D0                                                                                                                                  
+    Warning:            #D97706  / bg #FFF7ED / border #FED7AA                                                                                                                                  
+    Error:              #DC2626  / bg #FEF2F2 / border #FECACA                                                                                                                                  
+    Info blue:          #2563EB  / bg #EFF6FF / border #BFDBFE                                                                                                                                  
+                                                                                                                                                                                                
+  GLOBAL LAYOUT:                                                                                                                                                                                
+  Fixed sidebar 240px + main content area filling remaining width.                                                                                                                              
+                                                                                                                                                                                                
+  SIDEBAR:                                     
+    - Top: "Rise" wordmark (bold 18px #1C1917) + "· Azora" (14px #78716C)                                                                                                                       
+    - Nav sections with section labels 11px uppercase muted tracking-wide:                                                                                                                      
+      PRINCIPAL: Dashboard                                                                                                                                                                      
+      PRODUSE: Produse, Listing AI                                                                                                                                                              
+      VIDEO: Biblioteca, Creare video                                                                                                                                                           
+      CAMPANII: Campanii                                                                                                                                                                        
+      CONT: Setări                                                                                                                                                                              
+    - Nav item: icon (20px) + label (14px), padding 8px 12px, rounded-lg                                                                                                                        
+    - Active: bg #F5F5F4, left bar 3px #D4AF37, text #1C1917 bold                                                                                                                               
+    - Hover: bg #FAFAF9                                                                                                                                                                         
+    - Inactive: text #78716C                                                                                                                                                                    
+    - Bottom: avatar circle (gold bg, white initials) + "eusebiu@azora.ro"                                                                                                                      
+      (12px muted, truncated) + logout icon button                                                                                                                                              
+                                                                                                                                                                                                
+  TOP HEADER (per page):                                                                                                                                                                        
+    White bg, border-bottom 1px #E7E5E4, padding 0 24px, height 56px                                                                                                                            
+    Left: page title (bold 18px) + optional breadcrumb below (12px muted)                                                                                                                       
+    Right: contextual action buttons                                                                                                                                                            
+                                                                                                                                                                                                
+  MAIN CONTENT: padding 24px, bg #FAFAF9                                                                                                                                                        
+                                                                           
+  CARDS: white bg, border 1px #E7E5E4, rounded-xl, shadow-sm, padding 20px                                                                                                                      
+                                                                           
+  INPUTS: white bg, border #E7E5E4, rounded-lg, h-10, px-3                                                                                                                                      
+    Focus: border #D4AF37, ring 2px #D4AF37/20                             
+                                                                                                                                                                                                
+  BUTTONS:                                                                 
+    Primary:     bg #292524, white, hover #44403C, h-10, px-4, rounded-lg, 14px                                                                                                                 
+    Gold CTA:    bg #D4AF37, text #1C1917 bold, hover #B8971F                                                                                                                                   
+    Outlined:    white bg, border #E7E5E4, text #1C1917, hover bg #F5F5F4                                                                                                                       
+    Destructive: white bg, border #DC2626, text #DC2626, hover bg #FEF2F2                                                                                                                       
+    Ghost:       no border/bg, text #78716C, hover bg #F5F5F4                                                                                                                                   
+    Link:        no bg, text #D4AF37 gold, underline on hover, 14px                                                                                                                             
+                                                                                                                                                                                                
+  BADGES:                                                                                                                                                                                       
+    Success:  bg #DCFCE7, text #15803D                                                                                                                                                          
+    Warning:  bg #FFF7ED, text #D97706                                                                                                                                                          
+    Error:    bg #FEF2F2, text #DC2626         
+    Gold:     bg #FFFBEB, text #92690A, border #FDE68A                                                                                                                                          
+    Neutral:  bg #F5F5F4, text #78716C                                                                                                                                                          
+                                                                                                                                                                                                
+  TABLES:                                                                                                                                                                                       
+    Header: bg #F5F5F4, text #78716C 12px uppercase tracking-wide                                                                                                                               
+    Rows: white bg, border-bottom #E7E5E4, hover #FAFAF9                                                                                                                                        
+    Row height: 52px                                                                                                                                                                            
+                                                                                                                                                                                                
+  TABS: underline style — active tab: text #1C1917 bold, 2px gold underline                                                                                                                     
+    Inactive: text #78716C, no underline, hover text #1C1917                                                                                                                                    
+                                                                                                                                                                                                
+                                                                           
+  ===================================================================                                                                                                                           
+  SCREEN 1 — LOGIN                                                         
+  ===================================================================                                                                                                                           
+   
+  Full page, no sidebar. Background #FAFAF9 with very subtle repeating                                                                                                                          
+  diagonal line texture (10% opacity, warm gray).                          
+                                                                                                                                                                                                
+  Center card (white, 460px wide, rounded-2xl, border, shadow-lg):                                                                                                                              
+    - Logo: "Rise" 28px bold + small gold dot + "by Azora" 14px muted                                                                                                                           
+    - Divider 1px #E7E5E4                                                                                                                                                                       
+    - "Bun venit înapoi" heading 20px bold                                 
+    - "Intră în contul tău Azora" subtitle 14px muted                                                                                                                                           
+    - Label "Email" + email input (full-width)                                                                                                                                                  
+    - Label "Parolă" + password input (full-width, show/hide icon right)                                                                                                                        
+    - "Intră în cont" primary button full-width                                                                                                                                                 
+    - "Platformă privată · Azora SRL" 12px muted centered at bottom                                                                                                                             
+                                                                                                                                                                                                
+  No sign-up, no social auth, no forgot password link.                                                                                                                                          
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================      
+  SCREEN 2 — DASHBOARD                         
+  ===================================================================
+
+  Header: "Dashboard" + "Bună ziua, Eusebiu 👋" subtitle muted                                                                                                                                  
+  Right: date range selector "Ultimele 30 zile ▾" (outlined button)
+                                                                                                                                                                                                
+  ROW 1 — 4 KPI cards equal width:                                                                                                                                                              
+                                                                                                                                                                                                
+    Card A "Vânzări totale":                                                                                                                                                                    
+      Value: "24.850 RON" (28px bold #1C1917)                              
+      Trend: "+12% față de luna trecută" (success green, up arrow icon)                                                                                                                         
+      Subtitle: "143 comenzi" (muted 13px)                                                                                                                                                      
+                                                                                                                                                                                                
+    Card B "Cheltuieli publicitate":                                                                                                                                                            
+      Value: "7.680 RON" (28px bold)                                                                                                                                                            
+      Trend: "+8%" (warning orange, up arrow — costs going up)                                                                                                                                  
+      Subtitle: "Meta Ads" (muted)                                                                                                                                                              
+                                               
+    Card C "ROAS mediu":                                                                                                                                                                        
+      Value: "3.2×" (28px bold, gold color #D4AF37)                        
+      Trend: "+0.4× față de luna trecută" (success green)                                                                                                                                       
+      Subtitle: "Return on ad spend" (muted)                               
+                                                                                                                                                                                                
+    Card D "Profit net estimat":                                           
+      Value: "8.420 RON" (28px bold, success green)                                                                                                                                             
+      Trend: "+18%" (success green)                                                                                                                                                             
+      Subtitle: "după costuri + taxe" (muted)  
+                                                                                                                                                                                                
+  ROW 2 — two columns:                                                     
+                                                                                                                                                                                                
+    Left 62% — "Vânzări vs Cheltuieli" line chart card:                                                                                                                                         
+      X axis: last 30 days (every 5 days labeled)
+      2 lines: charcoal line (sales), gold dashed line (ad spend)                                                                                                                               
+      Y axis: RON values                                                                                                                                                                        
+      Smooth curves. No heavy grid — only horizontal light lines (#F5F5F4)                                                                                                                      
+      Legend below: ● Vânzări ○ Cheltuieli publicitate                                                                                                                                          
+                                                                                                                                                                                                
+    Right 38% — "Top produse după profit" card:                                                                                                                                                 
+      5 rows. Each row:                                                                                                                                                                         
+        40px product image (rounded-lg) | product name (14px bold, truncated)                                                                                                                   
+        | "189 RON" muted | margin badge (green/amber/red)                                                                                                                                      
+      Last row shows faded "Vezi toate →" link bottom                                                                                                                                           
+                                                                                                                                                                                                
+  ROW 3 — full width "Campanii active" card:                                                                                                                                                    
+    Small table, columns:                                                                                                                                                                       
+    Campanie (name) | Stare (Active/Paused badge) | Buget/zi | ROAS |                                                                                                                           
+    Achiziții | Cheltuieli | Acțiuni (View button)                                                                                                                                              
+    Max 4 rows. "Mergi la Campanii →" link bottom-right                                                                                                                                         
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================                                                                                                                           
+  SCREEN 3 — PRODUCTS LIST (/produse)                                      
+  ===================================================================
+
+  Header: "Produse"                                                                                                                                                                             
+  Right: "Sincronizează Shopify" (outlined, refresh icon) +
+    "Ultima sincronizare: acum 2 ore · 143 produse" (12px muted)                                                                                                                                
+                                                                                                                                                                                                
+  TAB BAR:                                                                                                                                                                                      
+    "Toate produsele" (active, gold underline) | "Draft-uri" 3 badge (muted)                                                                                                                    
+    Right side of tab bar: search input + "Status ▾" + "Categorie ▾" filters                                                                                                                    
+                                                                                                                                                                                                
+  PRODUCTS TABLE (white card):                                                                                                                                                                  
+    Columns:                                                                                                                                                                                    
+    - Produs: 48px image (rounded-lg border) + title (14px bold) +                                                                                                                              
+      handle below (12px muted #78716C)                                                                                                                                                         
+    - Preț: "189 RON" (14px)                                                                                                                                                                    
+    - Cost configurat: green check icon "Configurat" or orange dash "—"                                                                                                                         
+    - Marjă: colored percentage                                                                                                                                                                 
+      >40% → success green badge                                                                                                                                                                
+      20–40% → warning amber badge                                                                                                                                                              
+      <20% → error red badge                                                                                                                                                                    
+      Not set → gray "—"                                                   
+    - Status: "Activ" green badge or "Inactiv" gray badge                                                                                                                                       
+    - Acțiuni: "Editează costuri" ghost button                                                                                                                                                  
+                                                                                                                                                                                                
+    Footer: pagination "← 1 2 3 → · 143 produse"                                                                                                                                                
+                                                                                                                                                                                                
+  DRAFT-URI TAB (alternate state of same screen):                                                                                                                                               
+    Shows ProductDraft records — columns:                                  
+    - Produs: title + source URL chip below (alibaba.com, 11px muted)                                                                                                                           
+    - Status: "În așteptare" gold badge / "Publicat" green / "Eroare" red                                                                                                                       
+    - Creat: relative time ("acum 2 ore")                                                                                                                                                       
+    - Acțiuni: "Editează" + "Publică" buttons side by side                                                                                                                                      
+                                                                                                                                                                                                
+    Empty draft state: centered "Niciun listing generat" +                                                                                                                                      
+    "Generează primul listing AI →" gold link button                                                                                                                                            
+                                                                                                                                                                                                
+                                                                           
+  ===================================================================                                                                                                                           
+  SCREEN 4 — PRODUCT DETAIL & PROFITABILITY (/produse/[id])                
+  ===================================================================                                                                                                                           
+   
+  Breadcrumb: "← Produse" | "Dispozitiv 5 in 1 Modelare Corporala"                                                                                                                              
+                                                                           
+  TWO COLUMN layout:                                                                                                                                                                            
+                                                                           
+  LEFT 36% — Product info card (white):                                                                                                                                                         
+    Product image full width, rounded-lg, border
+    Title: "Dispozitiv 5 in 1 Modelare Corporala – EMS..." (16px bold)                                                                                                                          
+    Price row: "189 RON" (22px bold) + "279 RON" (strikethrough muted 16px)                                                                                                                     
+    Status badge "Activ"                                                                                                                                                                        
+    Tags: "beauty" "ems" "wellness" (small neutral pills)                                                                                                                                       
+    Divider                                                                                                                                                                                     
+    "Shopify ID: 123456789" (12px muted)                                                                                                                                                        
+    "Ultima actualizare: acum 3 zile" (12px muted)                                                                                                                                              
+    "Vezi pe Shopify ↗" gold link                                                                                                                                                               
+                                                                                                                                                                                                
+  RIGHT 64% — two stacked cards:                                                                                                                                                                
+                                                                           
+    CARD 1 "Configurare costuri" (white):                                                                                                                                                       
+      Section header + "Salvează" primary button top-right                 
+                                                                                                                                                                                                
+      2-column form grid:                                                  
+      - "Cost achiziție (COGS)" input + "RON" suffix                                                                                                                                            
+      - "Cost transport" input + "RON" suffix                                                                                                                                                   
+      - "Cost ambalare" input + "RON" suffix                                                                                                                                                    
+      - "Taxa Shopify" readonly "2%" chip (muted, auto-calculated)                                                                                                                              
+      - "Cota TVA" select: 19% / 9% / 0%                                                                                                                                                        
+      - "TVA furnizor deductibil" toggle switch right-aligned                                                                                                                                   
+        (off: border gray, on: gold fill)                                                                                                                                                       
+                                                                                                                                                                                                
+      Full-width below form:                                                                                                                                                                    
+      - "Rată retur estimată" label + "5%" value right                                                                                                                                          
+      - Horizontal slider, track #E7E5E4 filled gold, thumb #D4AF37 circle                                                                                                                      
+      - 0% ——●—— 30% scale below                                                                                                                                                                
+                                                                                                                                                                                                
+      - "Tip impozitare" select:                                                                                                                                                                
+        "Micro 1%" / "Micro 3%" / "Impozit profit 16%"                                                                                                                                          
+                                                                                                                                                                                                
+    CARD 2 "Profitabilitate estimată" (bg #FAFAF9, border #D4AF37/30):                                                                                                                          
+      Section header "Calcul profit per unitate" + gold chart icon                                                                                                                              
+                                                                                                                                                                                                
+      Table 2 columns (label | value), 8 rows:                                                                                                                                                  
+        Preț vânzare      | 189,00 RON                                                                                                                                                          
+        − COGS            | − 45,00 RON  (muted)                                                                                                                                                
+        − Transport       | − 12,00 RON  (muted)                                                                                                                                                
+        − Ambalare        | − 5,00 RON   (muted)
+        − TVA colectată   | − 30,08 RON  (muted)                                                                                                                                                
+        − Taxa Shopify    | − 3,78 RON   (muted)                                                                                                                                                
+        − Cost retur (5%) | − 9,45 RON   (muted)                                                                                                                                                
+        ─────────────────────────────────                                                                                                                                                       
+        Profit net        | 83,69 RON    (bold, large, green)                                                                                                                                   
+        Marjă             | 44.3%        (green badge)                                                                                                                                          
+                                                                                                                                                                                                
+      Note: "Valorile se actualizează live pe măsură ce modifici costurile"                                                                                                                     
+      (12px muted italic)                                                                                                                                                                       
+                                                                                                                                                                                                
+      Below divider — "Impozit estimat (Micro 1%)":                                                                                                                                             
+        "Impozit: 1,89 RON · Profit după impozit: 81,80 RON" (muted 13px)
+                                                                                                                                                                                                
+                                                                           
+  ===================================================================                                                                                                                           
+  SCREEN 5 — PRODUCT LISTING CREATOR — URL GENERATOR (/produse/nou)        
+  ===================================================================                                                                                                                           
+   
+  Header: "← Produse" breadcrumb | "Listing nou cu AI" title                                                                                                                                    
+                                                                           
+  Centered card (white, max-width 680px, rounded-xl, shadow-sm):                                                                                                                                
+                                                                           
+    TOP section:                                                                                                                                                                                
+      "✨ Generează listing din URL" heading 18px bold                     
+      "Pasează un link de pe Alibaba, AliExpress sau orice marketplace.                                                                                                                         
+       Rise extrage datele automat și creează listing-ul în stilul AZORA."                                                                                                                      
+       (14px muted, 2 rows)                                                                                                                                                                     
+                                                                                                                                                                                                
+    FORM:                                                                                                                                                                                       
+      Label "URL produs sursă"                                                                                                                                                                  
+      Large URL input (full-width, h-12, placeholder                                                                                                                                            
+      "https://www.alibaba.com/product/...")                                                                                                                                                    
+      Below input: chip examples "alibaba.com" "aliexpress.com" "1688.com"                                                                                                                      
+      (small neutral outlined pills, clickable to fill example)                                                                                                                                 
+                                                                                                                                                                                                
+      Label "Preț vânzare (RON)"                                                                                                                                                                
+      Number input (half-width) + "RON" suffix chip                                                                                                                                             
+                                                                                                                                                                                                
+      "✨ Generează listing" gold CTA button (full-width, large h-12,                                                                                                                           
+      sparkle icon left)                                                                                                                                                                        
+                                                                                                                                                                                                
+    GENERATION PROGRESS (shows after button press, replaces form):                                                                                                                              
+      Title "Se generează listing-ul..."       
+      3 steps stacked vertically, each with icon + label + status:                                                                                                                              
+                                                                                                                                                                                                
+      ✓  "Date extrase din sursă"              (completed — green check,                                                                                                                        
+                                                muted "alibaba.com ·                                                                                                                            
+                                                Dispozitiv 5 in 1..." subtitle)                                                                                                                 
+      ⏳ "Se generează listing-ul cu Claude AI" (in progress — spinning                                                                                                                         
+                                                gold circle animation)                                                                                                                          
+      ○  "Listing pregătit pentru review"       (waiting — gray circle)                                                                                                                         
+                                                                                                                                                                                                
+      Progress bar below (thin, gold fill, animated)                                                                                                                                            
+      Cancel link button at bottom                                                                                                                                                              
+                                                                                                                                                                                                
+    ERROR STATE (if scraping fails):                                       
+      Red error box: "Nu am putut extrage datele de la acest URL."                                                                                                                              
+      Suggestion: "Verifică dacă URL-ul este accesibil public."                                                                                                                                 
+      "Încearcă din nou" outlined button                                                                                                                                                        
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================      
+  SCREEN 6 — PRODUCT LISTING CREATOR — DRAFT EDITOR
+            (/produse/nou?draft=id)                                                                                                                                                             
+  ===================================================================
+                                                                                                                                                                                                
+  HEADER BAR (full-width, white, border-bottom):                                                                                                                                                
+    Left: "← Produse" link | "Listing Draft" title
+    Center: status badge "ÎN AȘTEPTARE REVIEW" (gold) or                                                                                                                                        
+            "PUBLICAT" (green) or "EROARE" (red)                                                                                                                                                
+    Right: "Publică în Shopify" gold CTA button (disabled if errors)                                                                                                                            
+                                                                                                                                                                                                
+  TWO COLUMN layout:                                                                                                                                                                            
+                                                                                                                                                                                                
+  LEFT 58% — EDITOR:                                                                                                                                                                            
+    All fields are inline-editable (click to edit, auto-save on blur)      
+                                                                                                                                                                                                
+    SECTION "Titlu":                                                                                                                                                                            
+      Large text input (full-width, 18px, border only shows on hover/focus)                                                                                                                     
+      "Dispozitiv 5 in 1 Modelare Corporala – EMS, RF, Infrarosu..."                                                                                                                            
+      Character counter: "67/120" (muted, right-aligned)                                                                                                                                        
+                                                                                                                                                                                                
+    SECTION "Prețuri + Tags" (3 columns inline):                                                                                                                                                
+      "Preț vânzare" input + "RON" | "Preț comparat" input + "RON" |                                                                                                                            
+      "Tags" multi-tag input (type + enter to add, × to remove each tag)                                                                                                                        
+      Tags shown as small gold-outlined pills: "beauty" × "ems" × "rf" ×                                                                                                                        
+                                                                                                                                                                                                
+    SECTION "Imagini":                                                                                                                                                                          
+      Horizontal scroll row of image cards (each 96×96px, rounded-lg, border):                                                                                                                  
+        Shows product image + "×" remove button top-right                                                                                                                                       
+      Last card: dashed border + "+" icon + "Adaugă URL" label                                                                                                                                  
+      Below: "Sursă: alibaba.com" + draggable reorder hint (12px muted)                                                                                                                         
+                                                                                                                                                                                                
+    SECTION "Descriere":                                                                                                                                                                        
+      Label "Descriere produs (HTML)" + "Regenerează ↺" ghost link right                                                                                                                        
+      Large textarea (min-height 500px, monospace-optional, 13px):                                                                                                                              
+        Shows the full AZORA-style listing text with emoji sections:                                                                                                                            
+        💎 Corpul tau merita cel mai bun tratament...                                                                                                                                           
+        ⚡ TEHNOLOGIE 5-IN-1 – EMS, Radiofrecventa...                                                                                                                                           
+        ✅ REZULTATE DEMONSTRATE                                                                                                                                                                
+        Saptamana 2-4: ...                                                                                                                                                                      
+        📋 CUM SE FOLOSESTE                                                                                                                                                                     
+        ...                                                                                                                                                                                     
+      "Copiere" ghost button top-right of textarea                                                                                                                                              
+                                                                                                                                                                                                
+    SECTION "Sursă" (readonly):                                            
+      Small chip: link icon + "alibaba.com/product/..." (12px muted,                                                                                                                            
+      not editable)                                                                                                                                                                             
+                                                                                                                                                                                                
+  RIGHT 42% — PREVIEW & STATUS:                                                                                                                                                                 
+    CARD "Previzualizare Shopify" (white, border):                                                                                                                                              
+      Mock Shopify product page preview (simplified):                                                                                                                                           
+      - Product image (first from images array)                                                                                                                                                 
+      - Title rendered                                                                                                                                                                          
+      - "189 RON" price                                                                                                                                                                         
+      - "Adaugă în coș" mock button (gray, not interactive)                
+      - Description rendered (truncated, "Citește mai mult" fake link)                                                                                                                          
+                                                                                                                                                                                                
+    CARD "Status publicare" (white, border):                                                                                                                                                    
+      Status row: icon + label + timestamp                                                                                                                                                      
+      "Creat: acum 5 minute"                                                                                                                                                                    
+      "Status: În așteptare review"            
+                                                                                                                                                                                                
+      If PUBLISHED:                                                        
+        Green check + "Publicat pe Shopify"                                                                                                                                                     
+        "Shopify ID: 123456789" link                                                                                                                                                            
+        "Publicat: 12 Mar 2026, 14:32"         
+                                                                                                                                                                                                
+      If FAILED:                                                           
+        Red error box with error message                                                                                                                                                        
+        "Încearcă din nou" button                                                                                                                                                               
+                                               
+      Divider                                                                                                                                                                                   
+                                                                           
+      "Publică în Shopify" gold CTA button full-width                                                                                                                                           
+      Note: "Produsul va fi creat ca draft în Shopify Admin." (12px muted) 
+                                                                                                                                                                                                
+   
+  ===================================================================                                                                                                                           
+  SCREEN 7 — SETTINGS (/setari)                                            
+  ===================================================================
+
+  Header: "Setări"                                                                                                                                                                              
+   
+  CARD 1 — "Shopify" (white):                                                                                                                                                                   
+    Header row: Shopify green bag icon (24px) + "Shopify" (16px bold) +    
+    status badge right                                                                                                                                                                          
+                                                                           
+    ── CONNECTED STATE ──                                                                                                                                                                       
+    Status badge: "Conectat" success green                                 
+                                                                                                                                                                                                
+    Info row: store chip "azora.myshopify.com" (bg #F5F5F4, rounded-full,                                                                                                                       
+    monospace 13px, lock icon left) + "Custom App" small neutral badge                                                                                                                          
+                                                                                                                                                                                                
+    Stats row (3 columns, muted 13px):                                     
+      "143 produse importate" | "Ultima sincronizare: 2 ore în urmă" |                                                                                                                          
+      "Shopify API: v2024-01"                                                                                                                                                                   
+                                                                                                                                                                                                
+    Webhooks status: small row "Webhooks: Activ" with green dot indicator                                                                                                                       
+                                                                                                                                                                                                
+    Actions row:                                                                                                                                                                                
+      "Sincronizează acum" (outlined, refresh icon) +                      
+      "Deconectează" (outlined red, trash icon, requires confirmation)                                                                                                                          
+                                                                                                                                                                                                
+    Confirm disconnect modal (centered overlay):                                                                                                                                                
+      White card, rounded-xl, shadow-xl                                                                                                                                                         
+      "Ești sigur că vrei să te deconectezi?" (18px bold)                                                                                                                                       
+      "Toate cele 143 de produse importate vor fi șterse din Rise.                                                                                                                              
+      Produsele din Shopify nu vor fi afectate." (14px muted)                                                                                                                                   
+      "Anulează" outlined + "Deconectează" red primary buttons                                                                                                                                  
+                                                                                                                                                                                                
+    ── DISCONNECTED STATE ──                                                                                                                                                                    
+    Status badge: "Neconectat" gray                                                                                                                                                             
+                                                                                                                                                                                                
+    Section A "Conectare automată (recomandat)":                                                                                                                                                
+      "Conectează cu Shopify" button: bg #96BF48 Shopify green, white text,                                                                                                                     
+      Shopify bag icon left, full-width                                                                                                                                                         
+      "Vei fi redirecționat către Shopify pentru autorizare" (12px muted)  
+                                                                                                                                                                                                
+    Divider: ——— sau ——— (centered label)                                                                                                                                                       
+                                                                                                                                                                                                
+    Section B "Token manual":                                                                                                                                                                   
+      "Shop domain" input (placeholder "azora.myshopify.com")              
+      "Access token" input (placeholder "shpat_...", type password, show/hide)                                                                                                                  
+      "Conectează" primary charcoal button                                                                                                                                                      
+                                                                                                                                                                                                
+  CARD 2 — "Meta Ads" (white):                                                                                                                                                                  
+    Header: Meta blue/gradient icon + "Meta Ads" bold + "Neconectat" gray badge                                                                                                                 
+                                                                                                                                                                                                
+    Empty state (centered, muted):                                                                                                                                                              
+      Meta icon 40px (#E7E5E4 gray tint)                                                                                                                                                        
+      "Conectează Meta Ads pentru a gestiona campaniile" (14px muted)                                                                                                                           
+      "Conectare Meta" button (outlined, blue border + blue text, Meta icon)                                                                                                                    
+      "Necesită cont Business Manager" (12px muted)                                                                                                                                             
+                                                                                                                                                                                                
+  CARD 3 — "Cont" (white):                                                                                                                                                                      
+    User info row: avatar (gold circle, white "E") + "Eusebiu" bold +                                                                                                                           
+    "eusebiu@azora.ro" muted                                                                                                                                                                    
+    "Schimbă parola" ghost link right          
+                                                                                                                                                                                                
+  CARD 4 — "Despre" (white):                                               
+    "Rise v1.0.0 · Azora SRL · 2026" (13px muted)                                                                                                                                               
+                                                                                                                                                                                                
+                                               
+  ===================================================================                                                                                                                           
+  SCREEN 8 — VIDEO LIBRARY (/video-uri/biblioteca)                         
+  ===================================================================                                                                                                                           
+   
+  Header: "Biblioteca"                                                                                                                                                                          
+  Right: "Încarcă fișiere" primary button (upload icon)                    
+                                                                                                                                                                                                
+  TABS: "Toate" (active) | "Clipuri video" | "Imagini" | "Audio"                                                                                                                                
+                                                                                                                                                                                                
+  STATS ROW (3 small chips, muted):                                                                                                                                                             
+    "14 clipuri" | "8 imagini" | "3 fișiere audio" | "2.4 GB utilizați"    
+                                                                                                                                                                                                
+  UPLOAD DROP ZONE (full width, top of page, above grid):                                                                                                                                       
+    Dashed border 2px #E7E5E4, rounded-xl, bg white, padding 28px                                                                                                                               
+    Center column: upload cloud icon (#78716C 40px) +                                                                                                                                           
+    "Trage fișierele aici sau apasă pentru a selecta" (14px bold) +                                                                                                                             
+    "MP4, MOV, JPG, PNG, MP3 · Max 500 MB per fișier" (12px muted)                                                                                                                              
+    Hover: border #D4AF37, bg #FFFBEB                                                                                                                                                           
+                                                                                                                                                                                                
+    UPLOADING STATE (replaces above):                                                                                                                                                           
+      Progress bar (thin, gold fill, animated, rounded-full)                                                                                                                                    
+      "clip-produs-ems.mp4 · 127 MB · 43%" (13px)                                                                                                                                               
+      "Anulează" ghost link right                                                                                                                                                               
+                                                                                                                                                                                                
+  ASSET GRID (3 columns):                                                                                                                                                                       
+    Each card (white, border #E7E5E4, rounded-xl, shadow-sm, overflow-hidden):                                                                                                                  
+                                                                                                                                                                                                
+    VIDEO card:                                
+      Top: 16:9 ratio area, bg #1C1917 dark (only dark element, for video context)                                                                                                              
+      Centered: play button (white circle 40px, triangle inside)                                                                                                                                
+      Duration chip: "2:34" bottom-right (white text, #00000066 bg, rounded)                                                                                                                    
+      Bottom body:                                                                                                                                                                              
+        Filename "clip-produs-ems.mp4" (13px bold, truncated)                                                                                                                                   
+        "48.2 MB · MP4" (11px muted)                                                                                                                                                            
+        Tags: "produs" "ems" (gold outline pills, 11px)                                                                                                                                         
+        Hover: top-right "⋯" icon button appears                                                                                                                                                
+                                                                                                                                                                                                
+    IMAGE card:                                                                                                                                                                                 
+      Top: image fill (cover, 16:9 ratio)                                  
+      Bottom: filename + size + tags (same as video)                                                                                                                                            
+                                                                                                                                                                                                
+    AUDIO card:                                                                                                                                                                                 
+      Top: bg #FFF7ED (warm tint), centered waveform bars animation                                                                                                                             
+      (5 bars, gold color, subtle bounce animation) + "🎵" icon                                                                                                                                 
+      Duration chip same as video                                                                                                                                                               
+      Bottom: filename + size + tags                                                                                                                                                            
+                                                                                                                                                                                                
+    EMPTY LIBRARY STATE:                                                   
+      Full page centered: upload cloud icon 56px (#E7E5E4) +                                                                                                                                    
+      "Nicio înregistrare" (18px bold) +                                                                                                                                                        
+      "Încarcă primul clip pentru a începe crearea de video-uri" (muted) +
+      "Încarcă fișiere" primary button                                                                                                                                                          
+                                                                           
+                                                                                                                                                                                                
+  ===================================================================      
+  SCREEN 9 — VIDEO CREATION WIZARD — STEP 1 (Selectează produs)
+  ===================================================================                                                                                                                           
+   
+  Header: "Creare video nou"                                                                                                                                                                    
+                                                                           
+  STEP INDICATOR (horizontal, full-width, below header):                                                                                                                                        
+    4 steps connected by thin line:
+    ● "1 Produs" (active — charcoal circle, bold label)                                                                                                                                         
+    ○ "2 Template" (inactive — gray circle, muted label)                                                                                                                                        
+    ○ "3 Configurare"                                                                                                                                                                           
+    ○ "4 Preview & Export"                                                                                                                                                                      
+    Completed steps: gold circle + white checkmark                                                                                                                                              
+                                                                                                                                                                                                
+  CONTENT (centered, max-width 600px):                                                                                                                                                          
+    "Selectează produsul" (20px bold)                                                                                                                                                           
+    "Video-ul va fi creat pentru produsul ales." (muted)                                                                                                                                        
+                                                                                                                                                                                                
+    Search input (full-width, search icon left, "Caută produs...")                                                                                                                              
+                                                                                                                                                                                                
+    Product list (scrollable, max-height 400px, white card, border):                                                                                                                            
+      Each row (52px high, border-bottom, hover #FAFAF9, cursor pointer):  
+      48px product image (rounded) + product name (14px bold) +                                                                                                                                 
+      "189 RON" muted right                                                                                                                                                                     
+                                                                                                                                                                                                
+    Selected row: bg #FFFBEB, left border 3px #D4AF37, gold checkmark right                                                                                                                     
+                                                                           
+    "Continuă →" primary button (full-width, disabled until product selected)                                                                                                                   
+                                                                           
+                                                                                                                                                                                                
+  ===================================================================      
+  SCREEN 10 — VIDEO CREATION WIZARD — STEP 2 (Template)
+  ===================================================================                                                                                                                           
+   
+  Same step indicator (step 1 completed = gold, step 2 active)                                                                                                                                  
+                                                                           
+  "Alege template-ul" (20px bold)                                                                                                                                                               
+  "Selectează tipul de video care se potrivește cel mai bine produsului." (muted)
+                                                                                                                                                                                                
+  3 TEMPLATE CARDS in a row (white, border, rounded-xl, shadow-sm):                                                                                                                             
+                                                                                                                                                                                                
+    Card 1 "Product Showcase":                                                                                                                                                                  
+      Top: preview area bg #1C1917 dark, shows simplified animation mockup 
+      (phone frame with colored rectangles representing video clips + subtitle                                                                                                                  
+      bar at bottom)                                                                                                                                                                            
+      "Recomandat" gold badge top-right                                                                                                                                                         
+      Title: "Product Showcase" (16px bold)                                                                                                                                                     
+      Desc: "Video dinamic cu clipuri și subtitrări. Ideal pentru                                                                                                                               
+      demonstrații de produs." (13px muted)                                                                                                                                                     
+      "Selectează" outlined button → fills primary on select                                                                                                                                    
+                                                                                                                                                                                                
+    Card 2 "Before & After":                                                                                                                                                                    
+      Preview: split screen, left gray, right warm tone                                                                                                                                         
+      Title: "Before & After"                                                                                                                                                                   
+      Desc: "Înainte și după. Ideal pentru beauty, wellness, fitness." (muted)
+      "Selectează" button                                                                                                                                                                       
+                                                                           
+    Card 3 "Slideshow":                                                                                                                                                                         
+      Preview: grid of 4 image rectangles with overlaid text               
+      Title: "Slideshow"                                                                                                                                                                        
+      Desc: "Prezentare imagini cu muzică. Ideal pentru produse vizuale." (muted)
+      "Selectează" button                                                                                                                                                                       
+                                                                           
+    Selected card: border 2px #D4AF37, shadow-md, "Selectează" → "✓ Selectat"                                                                                                                   
+    gold filled                                                            
+                                                                                                                                                                                                
+  4th PLACEHOLDER card (dashed border, bg #FAFAF9, not clickable):                                                                                                                              
+    "🤖 Hook Generator AI" (14px muted bold) + 
+    "Sub-project 5" small gray badge                                                                                                                                                            
+    "Disponibil în curând" (12px muted)                                                                                                                                                         
+                                                                                                                                                                                                
+  Navigation: "← Înapoi" ghost + "Continuă →" primary                                                                                                                                           
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================      
+  SCREEN 11 — VIDEO CREATION WIZARD — STEP 3 (Configurare)
+  ===================================================================
+
+  Same step indicator (steps 1+2 gold, step 3 active)                                                                                                                                           
+   
+  "Configurează video-ul" (20px bold)                                                                                                                                                           
+                                                                           
+  TWO COLUMN layout:                                                                                                                                                                            
+   
+  LEFT 52% — "Clipuri + Subtitrări":                                                                                                                                                            
+                                                                           
+    SUBSECTION "Clipuri video":                                                                                                                                                                 
+      Label "Clip 1" + slot card (white, dashed border, rounded-lg, h-16):
+        Empty: + icon + "Selectează clip din bibliotecă" (muted 13px)                                                                                                                           
+        Filled: thumbnail 48px (dark bg, play icon) + filename + "0:34" +                                                                                                                       
+                "×" remove button right                                                                                                                                                         
+      Repeat for "Clip 2", "Clip 3", "Clip 4"                                                                                                                                                   
+      "+ Adaugă slot clip" ghost link button                                                                                                                                                    
+                                                                                                                                                                                                
+    SUBSECTION "Subtitrări":                                                                                                                                                                    
+      "Subtitrare 1" row group (white card, border, rounded-lg, padding 12px):                                                                                                                  
+        Row A: "Frame start" number input (80px) → "Frame end" number input
+               + "30fps" label right (12px muted)                                                                                                                                               
+        Row B: "Linie 1 (alb)" text input full-width (standard text)                                                                                                                            
+        Row C: "Linie 2 (auriu)" text input full-width                                                                                                                                          
+               (gold left border accent #D4AF37)                                                                                                                                                
+      Same layout for subtitle 2, 3, 4 (collapsible after filled)                                                                                                                               
+      "+ Adaugă subtitrare" gold link button                                                                                                                                                    
+                                                                                                                                                                                                
+  RIGHT 48% — "Setări video":                                                                                                                                                                   
+                                                                                                                                                                                                
+    CARD white, border:                                                                                                                                                                         
+                                               
+      "Voiceover" section:                                                                                                                                                                      
+        Audio chip or empty state:                                         
+        Empty: audio icon + "Niciun voiceover" muted +                                                                                                                                          
+               "Selectează ▾" ghost button                                                                                                                                                      
+        Filled: waveform bars icon + filename + "1:12" + "×"                                                                                                                                    
+                                                                                                                                                                                                
+      "Mesaj CTA" text input (placeholder "Comandă acum pe Azora.ro!")                                                                                                                          
+      "Eticheta preț redus" text input (placeholder "−30%" optional)                                                                                                                            
+      "Eticheta livrare" text input (placeholder "Livrare gratuită" optional)                                                                                                                   
+                                                                                                                                                                                                
+      Divider                                                                                                                                                                                   
+                                                                                                                                                                                                
+      "Formate de exportat" checkboxes:                                                                                                                                                         
+        ☑ 9:16 — Reels, TikTok, Stories        
+        ☑ 4:5 — Feed Facebook/Instagram (recomandat)                                                                                                                                            
+        ☑ 1:1 — Feed pătrat                                                                                                                                                                     
+        ☑ 16:9 — YouTube, desktop                                                                                                                                                               
+      "Toate formatele selectate" (muted 12px)                                                                                                                                                  
+                                                                                                                                                                                                
+  Navigation: "← Înapoi" ghost + "Continuă la Preview →" primary                                                                                                                                
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================      
+  SCREEN 12 — VIDEO CREATION WIZARD — STEP 4 (Preview & Export)
+  ===================================================================
+
+  Same step indicator (steps 1+2+3 gold, step 4 active)                                                                                                                                         
+   
+  "Preview & Exportare" (20px bold)                                                                                                                                                             
+                                                                           
+  TWO COLUMN layout:                           
+
+  LEFT 44% — "Preview":                                                                                                                                                                         
+   
+    FORMAT TABS:                                                                                                                                                                                
+      "9:16" | "4:5" | "1:1" | "16:9" pill tabs                            
+      Active: bg #292524, white text                                                                                                                                                            
+      Inactive: bg #F5F5F4, muted text
+                                                                                                                                                                                                
+    PLAYER CONTAINER:                                                      
+      bg #1C1917 dark charcoal, rounded-xl, shadow-md                                                                                                                                           
+      Inside: Remotion player showing correct aspect ratio                                                                                                                                      
+      Correct size for selected format (9:16 tall, 16:9 wide etc.)                                                                                                                              
+                                                                                                                                                                                                
+      Controls bar below container (white bg):                                                                                                                                                  
+        ▶ Play/Pause + ——●——— scrubber (gold thumb) + 0:04 / 0:27 timecode                                                                                                                      
+        Speed selector "1× ▾" right                                                                                                                                                             
+                                                                                                                                                                                                
+  RIGHT 56% — "Exportare":                                                                                                                                                                      
+                                                                                                                                                                                                
+    CARD "Comenzi render" (white, border):                                                                                                                                                      
+      Header: "Rulează aceste comenzi din folderul azora-ads/ pe Mac"      
+                                                                                                                                                                                                
+      Info box (bg #FFFBEB, border #FDE68A, rounded-lg, padding 12px):                                                                                                                          
+        ℹ️  gold icon + "Asigură-te că ai Node.js și dependențele instalate:                                                                                                                     
+        cd azora-ads && npm install" (13px)                                                                                                                                                     
+                                                                                                                                                                                                
+      For each selected format (4 blocks):                                                                                                                                                      
+        Label: "Format 4:5" (13px bold muted) + copy button right                                                                                                                               
+        Code block (bg #F5F5F4, border #E7E5E4, rounded-lg, monospace 12px,                                                                                                                     
+        padding 12px, horizontal scroll):                                                                                                                                                       
+          npx remotion render ProductShowcase-4x5 \                                                                                                                                             
+            out/product-showcase-4x5.mp4 \                                                                                                                                                      
+            --props='{"productName":"Dispozitiv 5 in 1",...}'                                                                                                                                   
+        "📋 Copiază" small outlined button top-right of code block                                                                                                                              
+                                                                                                                                                                                                
+      Divider                                                                                                                                                                                   
+                                                                                                                                                                                                
+      "Salvează configurația" primary charcoal button (full-width)                                                                                                                              
+      "Configurația va fi salvată în Rise și poate fi accesată oricând."
+      (12px muted centered)                                                                                                                                                                     
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================                                                                                                                           
+  SCREEN 13 — VIDEOS LIST (/video-uri)                                     
+  ===================================================================                                                                                                                           
+   
+  Header: "Video-uri"                                                                                                                                                                           
+  Right: "Creare video nou" primary button                                 
+                                                                                                                                                                                                
+  TABS: "Video-uri salvate" (active) | "Biblioteca" (link to /biblioteca)                                                                                                                       
+                                                                                                                                                                                                
+  Empty state (no videos yet):                                                                                                                                                                  
+    Centered: video camera icon 56px (muted) + "Niciun video configurat" + 
+    "Creează primul video pentru un produs Shopify" +                                                                                                                                           
+    "Creare video nou" primary button                                                                                                                                                           
+                                                                                                                                                                                                
+  Populated state — card grid (2 columns):                                                                                                                                                      
+    Each video card (white, border, rounded-xl, shadow-sm):                
+      Top row: product thumbnail 40px + product name (14px bold) +                                                                                                                              
+               template badge ("Product Showcase" neutral pill)                                                                                                                                 
+      Middle: 4 format chips inline:                                                                                                                                                            
+        "9:16" "4:5" "1:1" "16:9" (each: small gray pill,                                                                                                                                       
+        or gold outlined if render command was copied)                                                                                                                                          
+      Bottom row: "acum 3 zile" muted + "Editează" ghost + "Render ▾" outlined                                                                                                                  
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================                                                                                                                           
+  SCREEN 14 — CAMPAIGNS LIST (/campanii)                                   
+  ===================================================================
+
+  Header: "Campanii"                                                                                                                                                                            
+  Right: "Campanie nouă" primary button
+                                                                                                                                                                                                
+  SUMMARY ROW (3 metric chips, muted, inline):                                                                                                                                                  
+    "Total cheltuit: 7.680 RON" | "ROAS mediu: 3.2×" |
+    "Achiziții totale: 187"                                                                                                                                                                     
+                                                                                                                                                                                                
+  TABS: "Toate" (active) | "Active" | "Pauzate" | "Draft"                                                                                                                                       
+                                                                                                                                                                                                
+  CAMPAIGNS TABLE (white card):                                                                                                                                                                 
+    Columns:                                                               
+    - Campanie: campaign name (14px bold) + objective chip below
+      ("Vânzări" / "Trafic" small muted)                                                                                                                                                        
+    - Stare: "Activă" success badge / "Pauzată" warning / "Draft" neutral                                                                                                                       
+    - Buget/zi: "150 RON"                                                                                                                                                                       
+    - Cheltuit total: "2.340 RON"                                                                                                                                                               
+    - ROAS: "4.1×" (gold if >3, green if >2, red if <1)                                                                                                                                         
+    - Achiziții: "67"                                                                                                                                                                           
+    - CPM: "12.40 RON"                                                                                                                                                                          
+    - Acțiuni: "Vezi ↗" ghost + "⏸ Pauză" ghost (or ▶ Resume)                                                                                                                                   
+                                                                                                                                                                                                
+    Row click → goes to Campaign Detail (Screen 15)                                                                                                                                             
+                                                                                                                                                                                                
+    Empty state:                                                                                                                                                                                
+      "Nicio campanie" + "Conectează Meta Ads în Setări pentru a vedea     
+      campaniile" + "Mergi la Setări" outlined button                                                                                                                                           
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================                                                                                                                           
+  SCREEN 15 — CAMPAIGN DETAIL (/campanii/[id])                             
+  ===================================================================
+                                                                                                                                                                                                
+  Breadcrumb: "← Campanii" | "Campanie EP-2011 Dispozitiv LED"                                                                                                                                  
+                                                                                                                                                                                                
+  HEADER ROW:                                                                                                                                                                                   
+    Left: Campaign name (20px bold) + objective chip + status badge        
+    Right: "⏸ Pauză campanie" (outlined warning) | "Editează în Meta ↗"                                                                                                                         
+           (ghost, external link)                                                                                                                                                               
+                                                                                                                                                                                                
+  ROW 1 — 4 KPI cards (same style as dashboard):                                                                                                                                                
+    "Cheltuit" "2.340 RON" | "Achiziții" "67" |                            
+    "ROAS" "4.1×" (gold) | "CPM" "12.40 RON"                                                                                                                                                    
+                                                                                                                                                                                                
+  ROW 2 — full-width "Performanță în timp" chart card:                                                                                                                                          
+    Date range selector top-right: "Ultimele 7 zile ▾"                                                                                                                                          
+    Bar chart: x-axis days, grouped bars per day:                                                                                                                                               
+      Charcoal bar = Cheltuieli, Gold bar = Vânzări atribuite                                                                                                                                   
+    Line overlay: ROAS (gold dashed line, right y-axis)                                                                                                                                         
+    Legend: ■ Cheltuieli  ■ Vânzări  - ROAS                                                                                                                                                     
+                                                                                                                                                                                                
+  ROW 3 — two columns:                                                                                                                                                                          
+                                                                                                                                                                                                
+    Left 50% "Seturi de anunțuri":                                                                                                                                                              
+      Small table in card:                     
+      Columns: Nume set | Stare | Cheltuit | ROAS                                                                                                                                               
+      3-4 rows of ad sets                                                                                                                                                                       
+      Each row: "Set femei 25-45" | Active | "780 RON" | "5.2×"                                                                                                                                 
+                                                                                                                                                                                                
+    Right 50% "Creativuri":                                                                                                                                                                     
+      Grid 2×2 of ad creative thumbnails (video thumbnails, dark bg,                                                                                                                            
+      play icon, format badge corner)                                                                                                                                                           
+      Each: "9:16" badge + spend below "380 RON"                                                                                                                                                
+      "+ Adaugă creativ" dashed card                                                                                                                                                            
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================      
+  SCREEN 16 — EMPTY / LOADING / ERROR STATES   
+  ===================================================================                                                                                                                           
+   
+  Show 4 micro-states on same screen as examples:                                                                                                                                               
+                                                                           
+  STATE A — Table skeleton loading:                                                                                                                                                             
+    Table with 5 rows, each row has skeleton shimmer bars:                 
+    Round skeleton 40px (image) + 2 bars (name + handle) +                                                                                                                                      
+    short bar (price) + bars for each column                                                                                                                                                    
+    Shimmer: bg #F5F5F4 base, lighter wave #ECECEA animated left→right                                                                                                                          
+    Warm gray tones, rounded corners matching real cells                                                                                                                                        
+                                                                                                                                                                                                
+  STATE B — Empty video library:                                                                                                                                                                
+    Centered column: upload icon 56px (#D4AF37 gold tint, bg #FFFBEB circle)                                                                                                                    
+    + "Nicio înregistrare" (18px bold) +                                                                                                                                                        
+    "Încarcă primul clip pentru a crea video-uri de reclamă" (muted) +                                                                                                                          
+    "Încarcă fișiere" primary button                                                                                                                                                            
+                                                                                                                                                                                                
+  STATE C — Sync progress banner:                                                                                                                                                               
+    Full-width bar at top of products page:                                
+    bg #FFFBEB, border-bottom 1px #FDE68A, padding 10px 24px                                                                                                                                    
+    Gold spinning circle icon +                                                                                                                                                                 
+    "Sincronizare în curs... 87 din 143 produse importate" bold 14px +                                                                                                                          
+    thin gold progress bar below text (proportional)                                                                                                                                            
+    "×" dismiss button far right                                                                                                                                                                
+                                                                                                                                                                                                
+  STATE D — AI generation error card:                                                                                                                                                           
+    Inside URL generator, replaces progress steps:                         
+    Red info box (bg #FEF2F2, border #FECACA, rounded-lg):                                                                                                                                      
+    ⚠ icon + "Nu am putut extrage datele de la acest URL." bold +                                                                                                                               
+    "Firecrawl și Jina AI nu au putut accesa pagina. Verifică dacă                                                                                                                              
+    URL-ul este public și accesibil." (13px muted)                                                                                                                                              
+    "Încearcă din nou" outlined red button +                                                                                                                                                    
+    "Schimbă URL-ul" ghost link button inline                                                                                                                                                   
+                                                                                                                                                                                                
+                                                                                                                                                                                                
+  ===================================================================                                                                                                                           
+  GLOBAL NOTES FOR ALL SCREENS                                             
+  ===================================================================
+
+  NAVIGATION: clicking sidebar items never full-reloads — feels instant                                                                                                                         
+  (SPA navigation). Active page highlighted in sidebar.
+                                                                                                                                                                                                
+  NOTIFICATIONS: toast notifications appear bottom-right:                  
+    - Success: white card, green left bar 3px, check icon,                                                                                                                                      
+      "Produs salvat cu succes" + auto-dismiss 4s                                                                                                                                               
+    - Error: white card, red left bar, X icon, error message +                                                                                                                                  
+      "Închide" link                                                                                                                                                                            
+    - Info: white card, gold left bar, ℹ icon                                                                                                                                                   
+                                                                                                                                                                                                
+  CONFIRM DIALOGS: always centered modal overlay. Never inline.                                                                                                                                 
+  Backdrop: rgba(0,0,0,0.3) blur-sm. Card white, shadow-xl, rounded-2xl.                                                                                                                        
+  Always: Cancel (outlined) + Confirm (primary or destructive) buttons.                                                                                                                         
+                                                                                                                                                                                                
+  RESPONSIVE HINT: designed for 1280px+ desktop. Sidebar collapses                                                                                                                              
+  to icon-only on narrower viewports (shows only icons, 64px wide).                                                                                                                             
+                                                                                                                                                                                                
+  ALL TEXT IN ROMANIAN. No English labels visible to user.                                                                                                                                      
+  Dates: Romanian format "12 mar 2026". Prices always "RON" suffix.                                                                                                                             
+  Percentages: "44.3%" (decimal comma not needed, just period).                                                                                                                                 
+                                                                                                                                                                                                
+  ONLY DARK ELEMENT: The Remotion video player container in Wizard Step 4                                                                                                                       
+  and video cards' preview thumbnails use #1C1917 dark bg — this is                                                                                                                             
+  intentional for video preview contrast. Everything else is light.                                                                                                                             
+                                                                                                                                                                                                
+  ---                                                                                                                                                                                           
+  16 ecrane acoperite:                                                                                                                                                                          
+                                                                                                                                                                                                
+  ┌─────┬───────────────────┬─────────────────────────────────────────────┐
+  │  #  │       Ecran       │               Funcționalitate               │                                                                                                                     
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 1   │ Login             │ Auth                                        │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 2   │ Dashboard         │ KPIs, grafice, top produse, campanii        │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 3   │ Products List     │ Tabel produse + tab Draft-uri               │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 4   │ Product Detail    │ Costuri + calculator profitabilitate live   │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 5   │ Listing Generator │ URL → AI → scraping states                  │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 6   │ Draft Editor      │ Editare listing generat + publicare Shopify │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 7   │ Settings          │ Shopify OAuth/manual + Meta Ads             │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 8   │ Video Library     │ Upload + grid clipuri/imagini/audio         │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 9   │ Wizard Step 1     │ Selectează produs                           │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 10  │ Wizard Step 2     │ Template picker                             │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 11  │ Wizard Step 3     │ Configurare clipuri + subtitrări            │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 12  │ Wizard Step 4     │ @remotion/player preview + CLI commands     │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 13  │ Videos List       │ Video-uri salvate                           │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 14  │ Campaigns List    │ Tabel campanii Meta                         │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 15  │ Campaign Detail   │ Metrici + seturi anunțuri + creativuri      │
+  ├─────┼───────────────────┼─────────────────────────────────────────────┤                                                                                                                     
+  │ 16  │ States            │ Skeleton / empty / sync / error             │
+  └─────┴───────────────────┴─────────────────────────────────────────────┘   
