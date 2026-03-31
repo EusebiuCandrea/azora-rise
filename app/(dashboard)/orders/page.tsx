@@ -2,24 +2,33 @@ import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
 import { OrdersTable } from '@/features/orders/components/OrdersTable'
 import { SyncOrdersButton } from '@/features/orders/components/SyncOrdersButton'
+import { DateRangePicker } from '@/features/orders/components/DateRangePicker'
 import Link from 'next/link'
 
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; from?: string; to?: string }>
 }) {
   const session = await requireAuth()
   const orgId = await getCurrentOrgId(session)
   if (!orgId) return null
 
-  const { page: pageParam } = await searchParams
+  const { page: pageParam, from, to } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? '1', 10))
   const PAGE_SIZE = 25
 
+  const dateFilter = from && to
+    ? { gte: new Date(from + 'T00:00:00'), lte: new Date(to + 'T23:59:59') }
+    : undefined
+  const whereClause = {
+    organizationId: orgId,
+    ...(dateFilter ? { processedAt: dateFilter } : {}),
+  }
+
   const [orders, connection, total] = await Promise.all([
     db.order.findMany({
-      where: { organizationId: orgId },
+      where: whereClause,
       include: {
         items: {
           select: {
@@ -39,7 +48,7 @@ export default async function OrdersPage({
       where: { organizationId: orgId },
       select: { ordersLastSyncedAt: true, isOrdersSyncing: true },
     }),
-    db.order.count({ where: { organizationId: orgId } }),
+    db.order.count({ where: whereClause }),
   ])
 
   const paidStatuses = new Set(['paid', 'partially_refunded'])
@@ -58,7 +67,7 @@ export default async function OrdersPage({
 
   return (
     <div className="max-w-[1200px] space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold text-[#1C1917]">Comenzi</h1>
           <p className="text-sm text-[#78716C] mt-0.5">
@@ -70,7 +79,10 @@ export default async function OrdersPage({
             )}
           </p>
         </div>
-        <SyncOrdersButton isSyncing={connection?.isOrdersSyncing ?? false} />
+        <div className="flex items-center gap-2">
+          <DateRangePicker currentFrom={from} currentTo={to} />
+          <SyncOrdersButton isSyncing={connection?.isOrdersSyncing ?? false} />
+        </div>
       </div>
 
       {orders.length > 0 && (
