@@ -58,6 +58,9 @@ export default async function ProductDetailPage({ params }: Props) {
 
   const tags = (product.shopifyData as any)?.tags?.split(',').map((t: string) => t.trim()).filter(Boolean) ?? []
 
+  const inventoryQuantity = ((product.shopifyData as any)?.variants ?? [])
+    .reduce((sum: number, v: { inventory_quantity?: number }) => sum + (v.inventory_quantity ?? 0), 0)
+
   return (
     <div className="max-w-[1100px]">
       {/* Breadcrumb */}
@@ -124,6 +127,12 @@ export default async function ProductDetailPage({ params }: Props) {
 
             {/* Meta */}
             <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-[#78716C]">Stoc curent</p>
+                <span className={`text-xs font-semibold ${inventoryQuantity <= 5 ? 'text-[#DC2626]' : 'text-[#15803D]'}`}>
+                  {inventoryQuantity} buc
+                </span>
+              </div>
               <p className="text-xs text-[#78716C]">Shopify ID: {product.shopifyId}</p>
               <p className="text-xs text-[#78716C]">
                 Ultima actualizare: {new Intl.DateTimeFormat('ro', { day: 'numeric', month: 'short', year: 'numeric' }).format(product.updatedAt)}
