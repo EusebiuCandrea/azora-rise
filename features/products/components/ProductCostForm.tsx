@@ -21,6 +21,7 @@ interface OrgSettings {
   shippingCostDefault: number
   packagingCostDefault: number
   returnRateDefault: number
+  isVatPayer: boolean
 }
 
 interface ProductCostFormProps {
@@ -93,9 +94,11 @@ export function ProductCostForm({ productId, cost, price, orgSettings }: Product
   const shopifyFee = price * shopifyFeeRate
   const vatCollected = price * vatRate
   const vatDeducted = supplierVatDeductible ? (cogs + shipping + packaging) * vatRate : 0
+  const effectiveVatCollected = orgSettings.isVatPayer ? vatCollected : 0
+  const effectiveVatDeducted = orgSettings.isVatPayer ? vatDeducted : 0
   const returnLoss = price * returnRate
   const totalCosts = cogs + shipping + packaging
-  const profit = price - totalCosts + vatDeducted - shopifyFee - vatCollected - returnLoss
+  const profit = price - totalCosts + effectiveVatDeducted - shopifyFee - effectiveVatCollected - returnLoss
   const margin = price > 0 ? (profit / price) * 100 : 0
   const roi = totalCosts > 0 ? (profit / totalCosts) * 100 : 0
   const taxEstimate = price * taxRate
@@ -233,12 +236,12 @@ export function ProductCostForm({ productId, cost, price, orgSettings }: Product
             { label: 'Preț vânzare', value: `${price.toFixed(2)} RON`, bold: false, color: '#1C1917' },
             { label: '− COGS', value: `− ${cogs.toFixed(2)} RON`, bold: false, color: '#78716C' },
             { label: '− Transport & Ambalare', value: `− ${(shipping + packaging).toFixed(2)} RON`, bold: false, color: '#78716C' },
-            {
+            ...(orgSettings.isVatPayer ? [{
               label: supplierVatDeductible ? 'TVA (Colectată − Deductibilă)' : 'TVA colectată',
               value: `− ${(vatCollected - vatDeducted).toFixed(2)} RON`,
               bold: false,
               color: '#78716C',
-            },
+            }] : []),
             { label: `Shopify Fee (${(shopifyFeeRate * 100).toFixed(1)}%)`, value: `− ${shopifyFee.toFixed(2)} RON`, bold: false, color: '#78716C' },
             { label: `Provizion Retur (${returnRatePercent}%)`, value: `− ${returnLoss.toFixed(2)} RON`, bold: false, color: '#78716C' },
           ].map((row) => (

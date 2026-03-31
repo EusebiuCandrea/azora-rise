@@ -38,6 +38,7 @@ export default async function ProductDetailPage({ params }: Props) {
         shippingCostDefault: true,
         packagingCostDefault: true,
         returnRateDefault: true,
+        isVatPayer: true,
       },
     }),
   ])
@@ -48,6 +49,7 @@ export default async function ProductDetailPage({ params }: Props) {
     shippingCostDefault: orgData?.shippingCostDefault ?? 20,
     packagingCostDefault: orgData?.packagingCostDefault ?? 0,
     returnRateDefault: orgData?.returnRateDefault ?? 0.05,
+    isVatPayer: orgData?.isVatPayer ?? true,
   }
 
   const shopifyUrl = shopifyDomain
@@ -154,6 +156,7 @@ export default async function ProductDetailPage({ params }: Props) {
               productId={product.id}
               price={product.price}
               hasCost={!!product.cost}
+              isVatPayer={orgSettings.isVatPayer}
             />
           </TabsContent>
         </Tabs>

@@ -6,6 +6,7 @@ interface Props {
   productId: string
   price: number
   hasCost: boolean
+  isVatPayer: boolean
 }
 
 function ProfitRow({
@@ -14,13 +15,17 @@ function ProfitRow({
   isDeduction,
   isSubtotal,
   isFinal,
+  hidden,
 }: {
   label: string
   value: number
   isDeduction?: boolean
   isSubtotal?: boolean
   isFinal?: boolean
+  hidden?: boolean
 }) {
+  if (hidden) return null
+
   const textColor = isFinal
     ? value >= 0 ? '#15803D' : '#DC2626'
     : isSubtotal
@@ -42,7 +47,7 @@ function ProfitRow({
   )
 }
 
-export function ProfitabilityTab({ productId, price, hasCost }: Props) {
+export function ProfitabilityTab({ productId, price, hasCost, isVatPayer }: Props) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['product-profitability', productId],
     queryFn: async () => {
@@ -76,6 +81,8 @@ export function ProfitabilityTab({ productId, price, hasCost }: Props) {
   }
 
   const { perUnit, stats } = data
+  const vatRatePct = Math.round((perUnit.vatRateUsed ?? 0.21) * 100)
+  const hasAds = (stats.adsSpendRon ?? 0) > 0
 
   const marginColor =
     perUnit.profitMargin >= 30 ? '#15803D' :
@@ -118,19 +125,54 @@ export function ProfitabilityTab({ productId, price, hasCost }: Props) {
         </div>
         <div className="divide-y divide-[#E7E5E4]">
           <ProfitRow label="Preț vânzare (brut)" value={perUnit.revenueBrut} />
-          <ProfitRow label={`— TVA colectată (${Math.round((perUnit.vatRateUsed ?? 0.21) * 100)}%)`} value={-perUnit.breakdowns.vatCollected} isDeduction />
-          <ProfitRow label="= Venit net (fără TVA)" value={perUnit.revenueNet} isSubtotal />
+          <ProfitRow
+            label={`— TVA colectată (${vatRatePct}%)`}
+            value={-perUnit.breakdowns.vatCollected}
+            isDeduction
+            hidden={!isVatPayer}
+          />
+          <ProfitRow
+            label={isVatPayer ? '= Venit net (fără TVA)' : '= Venit net'}
+            value={perUnit.revenueNet}
+            isSubtotal
+          />
           <ProfitRow label="— COGS net" value={-perUnit.cogsNet} isDeduction />
-          <ProfitRow label="— Transport" value={-(perUnit.shippingCostDisplay ?? 0)} isDeduction />
+          <ProfitRow
+            label={perUnit.netTransportPerUnit >= 0 ? 'Transport net (câștig)' : 'Transport net (pierdere)'}
+            value={perUnit.netTransportPerUnit ?? 0}
+          />
           <ProfitRow label="— Ambalaj" value={-(perUnit.packagingCostDisplay ?? 0)} isDeduction />
-          <ProfitRow label="— Taxă Shopify (2%)" value={-perUnit.shopifyFee} isDeduction />
+          <ProfitRow label={`— Taxă Shopify (${((perUnit.shippingCostDisplay ?? 2)).toFixed(0)}%)`} value={-perUnit.shopifyFee} isDeduction />
           <ProfitRow label="= Profit brut" value={perUnit.grossProfit} isSubtotal />
           <ProfitRow label="— Provizion retururi" value={-perUnit.returnsProvision} isDeduction />
+          {hasAds && (
+            <ProfitRow label="— Cheltuieli publicitate" value={-(perUnit.adsSpendPerUnit ?? 0)} isDeduction />
+          )}
           <ProfitRow label="= Profit înainte de impozit" value={perUnit.profitPreTax} isSubtotal />
           <ProfitRow label="— Impozit venit" value={-perUnit.taxAmount} isDeduction />
           <ProfitRow label="= Profit net" value={perUnit.profitNet} isFinal />
         </div>
       </div>
+
+      {/* Ads stats — dacă există campanii legate */}
+      {hasAds && (
+        <div className="bg-white border border-[#E7E5E4] rounded-xl p-4 grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-[#78716C] font-medium uppercase tracking-wide">Ads spend (90 zile)</p>
+            <p className="text-base font-bold text-[#1C1917] mt-1">{stats.adsSpendRon.toFixed(0)} RON</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#78716C] font-medium uppercase tracking-wide">Achiziții</p>
+            <p className="text-base font-bold text-[#1C1917] mt-1">{stats.adsPurchases}</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#78716C] font-medium uppercase tracking-wide">ROAS</p>
+            <p className="text-base font-bold text-[#D4AF37] mt-1">
+              {stats.adsRoas ? `${stats.adsRoas.toFixed(1)}×` : '—'}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
