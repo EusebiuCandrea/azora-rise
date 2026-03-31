@@ -54,20 +54,11 @@ export default async function ProfitabilityPage({
     isVatPayer: org.isVatPayer,
   }
 
-  const [products, campaignMetricsAgg] = await Promise.all([
+  const [products, campaignMetricsAgg, periodOrderItems] = await Promise.all([
     db.product.findMany({
       where: { organizationId: orgId },
       include: {
         cost: true,
-        orderItems: {
-          where: {
-            order: {
-              organizationId: orgId,
-              financialStatus: { in: ['paid', 'partially_refunded'] },
-              processedAt: periodDateFilter,
-            },
-          },
-        },
         metaMappings: {
           include: {
             campaign: {
@@ -87,13 +78,65 @@ export default async function ProfitabilityPage({
       },
       _sum: { spend: true },
     }),
+    // Fetch ALL order items for the period — match to products by shopifyProductId
+    db.orderItem.findMany({
+      where: {
+        organizationId: orgId,
+        order: {
+          organizationId: orgId,
+          financialStatus: { in: ['paid', 'partially_refunded'] },
+          processedAt: periodDateFilter,
+        },
+      },
+      select: {
+        shopifyProductId: true,
+        quantity: true,
+        price: true,
+        order: {
+          select: {
+            id: true,
+            totalShipping: true,
+          },
+        },
+      },
+    }),
   ])
 
   const totalMetaAdsSpend = campaignMetricsAgg._sum.spend ?? 0
 
+  // Group order items by shopifyProductId
+  interface ProductSales {
+    unitsSold: number
+    grossRevenue: number
+    customerShippingTotal: number
+    orderIds: Set<string>
+  }
+  const salesByShopifyId = new Map<string, ProductSales>()
+
+  for (const item of periodOrderItems) {
+    const key = item.shopifyProductId
+    if (!key) continue
+    const existing = salesByShopifyId.get(key) ?? {
+      unitsSold: 0,
+      grossRevenue: 0,
+      customerShippingTotal: 0,
+      orderIds: new Set<string>(),
+    }
+    existing.unitsSold += item.quantity
+    existing.grossRevenue += item.price * item.quantity
+    // Only add shipping once per order (it's per-order, not per-item)
+    if (!existing.orderIds.has(item.order.id)) {
+      existing.customerShippingTotal += item.order.totalShipping
+      existing.orderIds.add(item.order.id)
+    }
+    salesByShopifyId.set(key, existing)
+  }
+
   const rows = products.map((product) => {
-    const unitsSold = product.orderItems.reduce((s, i) => s + i.quantity, 0)
-    const grossRevenue = product.orderItems.reduce((s, i) => s + i.price * i.quantity, 0)
+    const sales = salesByShopifyId.get(product.shopifyId)
+    const unitsSold = sales?.unitsSold ?? 0
+    const grossRevenue = sales?.grossRevenue ?? 0
+    const customerShippingTotal = sales?.customerShippingTotal ?? 0
     const adsSpendRon = product.metaMappings.reduce((sum, m) => {
       const campaignSpend = m.campaign.metrics.reduce((s, met) => s + met.spend, 0)
       const productCount = m.campaign._count.metaMappings || 1
@@ -125,7 +168,7 @@ export default async function ProfitabilityPage({
 
     const cost = product.cost
     const result = calculateProductProfitability(
-      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal: 0 },
+      { unitsSold, grossRevenue, totalDiscounts: 0, customerShippingTotal },
       {
         cogs: cost.cogs,
         supplierVatDeductible: cost.supplierVatDeductible,
@@ -184,6 +227,7 @@ export default async function ProfitabilityPage({
     orderBy: { category: 'asc' },
   })
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0)
+  const totalNetProfitAdjusted = totalNetProfit - totalExpenses
 
   function RecommendationIcon({ type }: { type: string | null }) {
     if (!type) return null
@@ -245,9 +289,14 @@ export default async function ProfitabilityPage({
         </div>
         <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 shadow-sm">
           <p className="text-xs font-medium text-[#78716C] uppercase tracking-wide">Profit net produse</p>
-          <p className={`text-[26px] font-bold mt-2 leading-none ${totalNetProfit >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
-            {productsWithData.length > 0 ? `${totalNetProfit.toFixed(0)} RON` : '—'}
+          <p className={`text-[26px] font-bold mt-2 leading-none ${totalNetProfitAdjusted >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
+            {productsWithData.length > 0 ? `${totalNetProfitAdjusted.toFixed(0)} RON` : '—'}
           </p>
+          {totalExpenses > 0 && (
+            <p className="text-xs text-[#78716C] mt-1">
+              Include cheltuieli: -{totalExpenses.toFixed(0)} RON
+            </p>
+          )}
         </div>
         <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 shadow-sm">
           <p className="text-xs font-medium text-[#78716C] uppercase tracking-wide">Marjă medie</p>
