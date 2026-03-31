@@ -58,6 +58,14 @@ export default async function OrdersPage({
   const unpaidPotential = potentialRevenue - paidRevenue
   const currency = orders[0]?.currency ?? 'RON'
 
+  function pageHref(p: number) {
+    const params = new URLSearchParams()
+    if (from) params.set('from', from)
+    if (to) params.set('to', to)
+    params.set('page', String(p))
+    return `?${params.toString()}`
+  }
+
   function formatAmount(value: number) {
     return `${new Intl.NumberFormat('ro-RO', {
       minimumFractionDigits: 0,
@@ -122,13 +130,13 @@ export default async function OrdersPage({
               <span>Afișate {orders.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0}–{Math.min(page * PAGE_SIZE, total)} din {total} comenzi</span>
               <div className="flex items-center gap-1">
                 {page > 1 && (
-                  <Link href={`?page=${page - 1}`} className="px-3 h-7 flex items-center border border-[#E7E5E4] bg-white rounded-lg hover:bg-[#F5F5F4] transition-colors">
+                  <Link href={pageHref(page - 1)} className="px-3 h-7 flex items-center border border-[#E7E5E4] bg-white rounded-lg hover:bg-[#F5F5F4] transition-colors">
                     ←
                   </Link>
                 )}
                 <span className="px-3 h-7 flex items-center bg-[#D4AF37] text-[#1C1917] font-semibold rounded-lg">{page}</span>
                 {page * PAGE_SIZE < total && (
-                  <Link href={`?page=${page + 1}`} className="px-3 h-7 flex items-center border border-[#E7E5E4] bg-white rounded-lg hover:bg-[#F5F5F4] transition-colors">
+                  <Link href={pageHref(page + 1)} className="px-3 h-7 flex items-center border border-[#E7E5E4] bg-white rounded-lg hover:bg-[#F5F5F4] transition-colors">
                     →
                   </Link>
                 )}
