@@ -62,9 +62,7 @@ export function OrdersTable({ orders }: Props) {
               <tr key={order.id} className="hover:bg-[#FAFAF9] transition-colors">
                 <td className="px-4 py-3 text-sm font-medium text-[#1C1917]">
                   <a
-                    href={`https://admin.shopify.com/orders/${order.shopifyOrderId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/orders/${order.id}`}
                     className="hover:text-[#D4AF37] transition-colors"
                   >
                     #{order.orderNumber}

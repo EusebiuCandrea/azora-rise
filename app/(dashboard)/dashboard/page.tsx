@@ -47,7 +47,7 @@ export default async function DashboardPage() {
       db.order.findMany({
         where: {
           organizationId: orgId,
-          financialStatus: { in: ['paid', 'partially_refunded'] },
+          financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
           processedAt: { gte: periodStart, lte: periodEnd },
         },
         include: { items: { include: { product: { include: { cost: true } } } } },
@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       db.order.findMany({
         where: {
           organizationId: orgId,
-          financialStatus: { in: ['paid', 'partially_refunded'] },
+          financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
           processedAt: { gte: prevStart, lte: prevEnd },
         },
       }),
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
           organizationId: orgId,
           order: {
             organizationId: orgId,
-            financialStatus: { in: ['paid', 'partially_refunded'] },
+            financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
             processedAt: { gte: periodStart, lte: periodEnd },
           },
         },

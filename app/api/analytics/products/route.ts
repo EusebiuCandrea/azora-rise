@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         where: {
           order: {
             organizationId: orgId,
-            financialStatus: { in: ['paid', 'partially_refunded'] },
+            financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
             processedAt: { gte: periodStart, lte: periodEnd },
           },
         },

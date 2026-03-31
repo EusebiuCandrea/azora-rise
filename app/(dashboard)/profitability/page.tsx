@@ -84,7 +84,7 @@ export default async function ProfitabilityPage({
         organizationId: orgId,
         order: {
           organizationId: orgId,
-          financialStatus: { in: ['paid', 'partially_refunded'] },
+          financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
           processedAt: periodDateFilter,
         },
       },

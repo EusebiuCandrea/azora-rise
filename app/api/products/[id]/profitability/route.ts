@@ -67,7 +67,7 @@ export async function GET(req: NextRequest, { params }: Props) {
       shopifyProductId: product.shopifyId,
       order: {
         processedAt: { gte: since },
-        financialStatus: { in: ['paid', 'partially_refunded'] },
+        financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
       },
     },
     select: {

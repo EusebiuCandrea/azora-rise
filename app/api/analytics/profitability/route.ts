@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   const orders = await db.order.findMany({
     where: {
       organizationId: orgId,
-      financialStatus: { in: ['paid', 'partially_refunded'] },
+      financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
       processedAt: { gte: periodStart, lte: periodEnd },
     },
     include: { items: { include: { product: { include: { cost: true } } } } },
@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
   const prevOrders = await db.order.findMany({
     where: {
       organizationId: orgId,
-      financialStatus: { in: ['paid', 'partially_refunded'] },
+      financialStatus: { in: ['paid', 'partially_refunded', 'pending'] },
       processedAt: { gte: prevStart, lte: prevEnd },
     },
   })
