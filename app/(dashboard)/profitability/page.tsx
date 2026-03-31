@@ -105,11 +105,17 @@ export default async function ProfitabilityPage({
   const totalMetaAdsSpend = campaignMetricsAgg._sum.spend ?? 0
 
   // Group order items by shopifyProductId
+  // Pre-compute total item quantity per order for proportional shipping allocation
+  const itemCountPerOrder = new Map<string, number>()
+  for (const item of periodOrderItems) {
+    const prev = itemCountPerOrder.get(item.order.id) ?? 0
+    itemCountPerOrder.set(item.order.id, prev + item.quantity)
+  }
+
   interface ProductSales {
     unitsSold: number
     grossRevenue: number
     customerShippingTotal: number
-    orderIds: Set<string>
   }
   const salesByShopifyId = new Map<string, ProductSales>()
 
@@ -120,15 +126,12 @@ export default async function ProfitabilityPage({
       unitsSold: 0,
       grossRevenue: 0,
       customerShippingTotal: 0,
-      orderIds: new Set<string>(),
     }
     existing.unitsSold += item.quantity
     existing.grossRevenue += item.price * item.quantity
-    // Only add shipping once per order (it's per-order, not per-item)
-    if (!existing.orderIds.has(item.order.id)) {
-      existing.customerShippingTotal += item.order.totalShipping
-      existing.orderIds.add(item.order.id)
-    }
+    // Allocate shipping proportionally by item quantity in the order
+    const totalItemsInOrder = itemCountPerOrder.get(item.order.id) ?? 1
+    existing.customerShippingTotal += (item.quantity / totalItemsInOrder) * item.order.totalShipping
     salesByShopifyId.set(key, existing)
   }
 
