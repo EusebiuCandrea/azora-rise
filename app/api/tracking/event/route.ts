@@ -34,7 +34,7 @@ function checkRateLimit(ip: string): boolean {
 const TrackingPayloadSchema = z.object({
   event: z.string().min(1).max(100),
   session_id: z.string().min(1).max(500),
-  ad_source: z.string().max(500).optional(),
+  ad_source: z.string().max(500).nullish(),
   organization_id: z.string().min(1),
   timestamp: z.number().int(),
   data: z.record(z.string(), z.unknown()),
