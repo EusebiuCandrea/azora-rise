@@ -137,7 +137,7 @@ Max 150-200 linii per UI component. Remotion templates sunt excepție.
 
 ## Deployment
 
-Dockerfile la `rise/Dockerfile` — builduit cu Dokploy pe Hostinger VPS.
+Dockerfile la `rise/Dockerfile` — deployat pe Railway (railway.com).
 - `output: 'standalone'` în next.config.ts
 - `prisma migrate deploy` rulează la startup în CMD
 
