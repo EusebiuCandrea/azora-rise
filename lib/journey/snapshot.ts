@@ -51,6 +51,18 @@ export async function calculateJourneySnapshot(
 ): Promise<JourneySnapshotData> {
   const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000)
 
+  // Fetch Meta ad metrics (impressions/clicks) via Campaign relation
+  const campaignMetrics = await db.campaignMetrics.findMany({
+    where: {
+      date: { gte: startDate },
+      campaign: { organizationId: orgId },
+    },
+    select: { impressions: true, clicks: true },
+  })
+
+  const totalImpressions = campaignMetrics.reduce((s, m) => s + (m.impressions ?? 0), 0)
+  const totalAdClicks = campaignMetrics.reduce((s, m) => s + (m.clicks ?? 0), 0)
+
   const sessions = await db.journeySession.findMany({
     where: {
       organizationId: orgId,
@@ -145,14 +157,14 @@ export async function calculateJourneySnapshot(
       },
     },
     update: {
-      totalImpressions: 0,
-      totalAdClicks: 0,
+      totalImpressions,
+      totalAdClicks,
       totalProductViews,
       totalScrollToForm,
       totalFormStarts,
       totalFormSubmits,
       totalOrders,
-      ctrAd: 0,
+      ctrAd: totalAdClicks > 0 && totalImpressions > 0 ? totalAdClicks / totalImpressions : 0,
       rateVisitToScroll,
       rateScrollToStart,
       rateStartToSubmit,
@@ -171,14 +183,14 @@ export async function calculateJourneySnapshot(
       organizationId: orgId,
       date: today,
       periodDays,
-      totalImpressions: 0,
-      totalAdClicks: 0,
+      totalImpressions,
+      totalAdClicks,
       totalProductViews,
       totalScrollToForm,
       totalFormStarts,
       totalFormSubmits,
       totalOrders,
-      ctrAd: 0,
+      ctrAd: totalAdClicks > 0 && totalImpressions > 0 ? totalAdClicks / totalImpressions : 0,
       rateVisitToScroll,
       rateScrollToStart,
       rateStartToSubmit,

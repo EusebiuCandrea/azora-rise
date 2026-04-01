@@ -122,8 +122,10 @@ export async function POST(req: NextRequest) {
   }
 
   const eventTimestamp = new Date(payload.timestamp)
+  // azora.js sends camelCase productId; plan spec uses snake_case product_id — support both
   const productId =
-    typeof payload.data.product_id === 'string' ? payload.data.product_id : undefined
+    typeof payload.data.product_id === 'string' ? payload.data.product_id :
+    typeof payload.data.productId === 'string' ? payload.data.productId : undefined
 
   // Save TrackingEvent
   try {
