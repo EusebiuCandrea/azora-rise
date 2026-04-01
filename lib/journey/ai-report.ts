@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenAI } from '@google/genai'
 import { RO_MARKET_KNOWLEDGE } from './knowledge-base'
 
 interface SnapshotInput {
@@ -19,7 +19,7 @@ interface SnapshotInput {
   overallConversion: number
 }
 
-const client = new Anthropic()
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`
 
@@ -98,13 +98,12 @@ Maxim 3 probleme, 3 sugestii, 2 quick wins. Focus pe probleme reale deduse din d
 Răspunde DOAR cu JSON valid.
 `.trim()
 
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
-    messages: [{ role: 'user', content: prompt }],
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
   })
 
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
+  const text = response.text ?? ''
 
   // Extract JSON - handle markdown code blocks
   const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) ?? text.match(/(\{[\s\S]*\})/)
