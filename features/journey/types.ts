@@ -1,5 +1,7 @@
 export interface ProductBreakdownItem {
   productId: string
+  productName: string
+  imageUrl: string | null
   visits: number
   scrollToForm: number
   formStarts: number
@@ -10,6 +12,12 @@ export interface ProductBreakdownItem {
 
 export interface CampaignBreakdownItem {
   campaignId: string
+  name: string
+  status: string
+  impressions: number
+  clicks: number
+  ctr: number
+  spend: number
   sessions: number
   orders: number
   conversionRate: number

@@ -9,6 +9,7 @@ import { JourneyKPICards } from './JourneyKPICards'
 import { JourneyMetricsChart } from './JourneyMetricsChart'
 import { JourneyProductTable } from './JourneyProductTable'
 import { JourneyAIPanel } from './JourneyAIPanel'
+import { JourneyCampaignTable } from './JourneyCampaignTable'
 import { useJourneyData } from './hooks/useJourneyData'
 
 export function JourneyPageClient() {
@@ -23,6 +24,7 @@ export function JourneyPageClient() {
   const alerts = data?.alerts ?? []
   const history = data?.history ?? []
   const paymentSplit = data?.paymentSplit ?? null
+  const campaigns = snapshot?.campaignBreakdown ?? []
 
   const criticalAlert = alerts.find((a) => a.severity === 'critical')
 
@@ -80,6 +82,7 @@ export function JourneyPageClient() {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
         <div className="lg:col-span-2 space-y-8">
           <JourneyMetricsChart history={history} period={period} />
+          <JourneyCampaignTable campaigns={campaigns} />
           <JourneyProductTable products={snapshot?.productBreakdown} />
         </div>
         <JourneyAIPanel

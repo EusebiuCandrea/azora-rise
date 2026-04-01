@@ -2,6 +2,8 @@ import { db } from '@/lib/db'
 
 export interface ProductBreakdownItem {
   productId: string
+  productName: string
+  imageUrl: string | null
   visits: number
   scrollToForm: number
   formStarts: number
@@ -12,6 +14,12 @@ export interface ProductBreakdownItem {
 
 export interface CampaignBreakdownItem {
   campaignId: string
+  name: string
+  status: string
+  impressions: number
+  clicks: number
+  ctr: number
+  spend: number
   sessions: number
   orders: number
   conversionRate: number
@@ -131,35 +139,79 @@ export async function calculateJourneySnapshot(
     productMap.set(s.productId, existing)
   }
 
+  // Resolve Shopify product IDs → names
+  const shopifyIds = Array.from(productMap.keys()).filter(Boolean)
+  const products = shopifyIds.length > 0
+    ? await db.product.findMany({
+        where: { organizationId: orgId, shopifyId: { in: shopifyIds } },
+        select: { shopifyId: true, title: true, imageUrl: true },
+      })
+    : []
+  const productInfoMap = new Map(products.map((p) => [p.shopifyId, { title: p.title, imageUrl: p.imageUrl }]))
+
   const productBreakdown: ProductBreakdownItem[] = Array.from(productMap.entries()).map(
-    ([productId, counts]) => ({
-      productId,
-      ...counts,
-      abandonRate:
-        counts.formStarts > 0
-          ? (counts.formStarts - counts.formSubmits) / counts.formStarts
-          : 0,
-    }),
+    ([productId, counts]) => {
+      const info = productInfoMap.get(productId)
+      return {
+        productId,
+        productName: info?.title ?? productId,
+        imageUrl: info?.imageUrl ?? null,
+        ...counts,
+        abandonRate:
+          counts.formStarts > 0
+            ? (counts.formStarts - counts.formSubmits) / counts.formStarts
+            : 0,
+      }
+    },
   )
 
-  // Campaign breakdown (skip null campaignIds)
-  const campaignMap = new Map<string, { sessions: number; orders: number }>()
+  // Campaign breakdown — join CampaignMetrics (impressions/clicks) + JourneySession (visits/orders)
+  const campaignsWithMetrics = await db.campaign.findMany({
+    where: { organizationId: orgId },
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      metrics: {
+        where: { date: { gte: startDate } },
+        select: { impressions: true, clicks: true, spend: true },
+      },
+    },
+  })
 
+  // Session counts per campaignId
+  const sessionMap = new Map<string, { sessions: number; orders: number }>()
   for (const s of sessions) {
     if (!s.campaignId) continue
-    const existing = campaignMap.get(s.campaignId) ?? { sessions: 0, orders: 0 }
+    const existing = sessionMap.get(s.campaignId) ?? { sessions: 0, orders: 0 }
     existing.sessions++
     if (s.reachedOrderConfirmed != null) existing.orders++
-    campaignMap.set(s.campaignId, existing)
+    sessionMap.set(s.campaignId, existing)
   }
 
-  const campaignBreakdown: CampaignBreakdownItem[] = Array.from(campaignMap.entries()).map(
-    ([campaignId, counts]) => ({
-      campaignId,
-      ...counts,
-      conversionRate: counts.sessions > 0 ? counts.orders / counts.sessions : 0,
-    }),
-  )
+  const STATUS_ORDER: Record<string, number> = { ACTIVE: 0, PAUSED: 1, COMPLETED: 2, DRAFT: 3 }
+
+  const campaignBreakdown: CampaignBreakdownItem[] = campaignsWithMetrics
+    .map((c) => {
+      const imp = c.metrics.reduce((s, m) => s + (m.impressions ?? 0), 0)
+      const clk = c.metrics.reduce((s, m) => s + (m.clicks ?? 0), 0)
+      const spd = c.metrics.reduce((s, m) => s + (m.spend ?? 0), 0)
+      const sess = sessionMap.get(c.id) ?? { sessions: 0, orders: 0 }
+      return {
+        campaignId: c.id,
+        name: c.name,
+        status: c.status,
+        impressions: imp,
+        clicks: clk,
+        ctr: imp > 0 ? clk / imp : 0,
+        spend: spd,
+        sessions: sess.sessions,
+        orders: sess.orders,
+        conversionRate: sess.sessions > 0 ? sess.orders / sess.sessions : 0,
+      }
+    })
+    .filter((c) => c.impressions > 0 || c.sessions > 0)
+    .sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9))
 
   const today = new Date(new Date().setHours(0, 0, 0, 0))
 
