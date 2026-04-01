@@ -19,7 +19,9 @@ interface SnapshotInput {
   overallConversion: number
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+const apiKey = process.env.GEMINI_API_KEY?.trim().replace(/^["']|["']$/g, '')
+if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
+const ai = new GoogleGenAI({ apiKey })
 
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`
 
