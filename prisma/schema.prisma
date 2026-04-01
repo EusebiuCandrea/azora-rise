@@ -48,6 +48,11 @@ model Organization {
   metaMappings     MetaProductMapping[]
   eurToRonFixed    Float?
   useFixedRate     Boolean @default(true)
+  trackingEvents   TrackingEvent[]
+  journeySessions  JourneySession[]
+  journeySnapshots JourneySnapshot[]
+  journeyAIReports JourneyAIReport[]
+  journeyAlerts    JourneyAlert[]
 }
 
 model OrganizationMember {
@@ -528,4 +533,128 @@ enum MappingType {
   UTM_AUTO
   NAME_PATTERN
   AI_SUGGESTED
+}
+
+// ─── Sub-proiect 6: Parcurs Client / Journey Analytics ────────────────────────
+
+model TrackingEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessionId      String
+  adSource       String?
+  event          String
+  productId      String?
+  data           Json
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, event, createdAt])
+  @@index([sessionId])
+  @@index([organizationId, createdAt])
+}
+
+model JourneySession {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessionId      String       @unique
+  adSource       String?
+  campaignId     String?
+  productId      String?
+
+  reachedProductView    DateTime?
+  reachedScrollToForm   DateTime?
+  reachedFormStart      DateTime?
+  reachedFormSubmit     DateTime?
+  reachedOrderConfirmed DateTime?
+
+  orderId        String?
+  paymentMethod  String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, createdAt])
+  @@index([campaignId])
+  @@index([productId])
+}
+
+model JourneySnapshot {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  date           DateTime
+  periodDays     Int
+
+  totalImpressions      Int   @default(0)
+  totalAdClicks         Int   @default(0)
+  totalProductViews     Int   @default(0)
+  totalScrollToForm     Int   @default(0)
+  totalFormStarts       Int   @default(0)
+  totalFormSubmits      Int   @default(0)
+  totalOrders           Int   @default(0)
+
+  ctrAd                 Float @default(0)
+  rateVisitToScroll     Float @default(0)
+  rateScrollToStart     Float @default(0)
+  rateStartToSubmit     Float @default(0)
+  rateSubmitToOrder     Float @default(0)
+  overallConversion     Float @default(0)
+
+  totalReturns          Int   @default(0)
+  totalUndelivered      Int   @default(0)
+  returnRate            Float @default(0)
+  undeliveredRate       Float @default(0)
+
+  productBreakdown      Json
+  campaignBreakdown     Json
+  ga4Data               Json?
+
+  createdAt      DateTime     @default(now())
+
+  aiReports      JourneyAIReport[]
+
+  @@unique([organizationId, date, periodDays])
+  @@index([organizationId, date])
+}
+
+model JourneyAIReport {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  snapshotId     String
+  snapshot       JourneySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  problems       Json
+  suggestions    Json
+  quickWins      Json
+
+  generatedAt    DateTime     @default(now())
+  modelUsed      String       @default("claude-sonnet-4-6")
+
+  @@index([organizationId, generatedAt])
+}
+
+model JourneyAlert {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  type           JourneyAlertType
+  severity       String
+  metric         String
+  currentValue   Float
+  baselineValue  Float
+  deltaPercent   Float
+
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, resolvedAt, createdAt])
+}
+
+enum JourneyAlertType {
+  FORM_ABANDON_SPIKE
+  LOW_SCROLL_RATE
+  AD_CLICK_DROP
+  CONVERSION_DROP
 }
