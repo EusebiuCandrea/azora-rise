@@ -549,7 +549,7 @@ model TrackingEvent {
   createdAt      DateTime     @default(now())
 
   @@index([organizationId, event, createdAt])
-  @@index([sessionId])
+  @@index([sessionId, organizationId])
   @@index([organizationId, createdAt])
 }
 
@@ -574,8 +574,8 @@ model JourneySession {
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId, createdAt])
-  @@index([campaignId])
-  @@index([productId])
+  @@index([organizationId, campaignId])
+  @@index([organizationId, productId])
 }
 
 model JourneySnapshot {
@@ -631,6 +631,8 @@ model JourneyAIReport {
   generatedAt    DateTime     @default(now())
   modelUsed      String       @default("claude-sonnet-4-6")
 
+  @@unique([snapshotId])
+  @@index([snapshotId])
   @@index([organizationId, generatedAt])
 }
 
