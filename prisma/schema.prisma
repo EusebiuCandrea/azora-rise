@@ -604,6 +604,7 @@ model JourneySnapshot {
   totalUndelivered      Int   @default(0)
   returnRate            Float @default(0)
   undeliveredRate       Float @default(0)
+  avgFormCompletionSec  Float @default(0)
 
   productBreakdown      Json
   campaignBreakdown     Json

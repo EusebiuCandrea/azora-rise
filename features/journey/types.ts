@@ -37,6 +37,7 @@ export interface JourneySnapshotDTO {
   totalUndelivered: number
   returnRate: number
   undeliveredRate: number
+  avgFormCompletionSec: number
   productBreakdown: ProductBreakdownItem[]
   campaignBreakdown: CampaignBreakdownItem[]
   createdAt: string

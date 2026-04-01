@@ -5,10 +5,18 @@ interface Props { snapshot?: JourneySnapshotDTO | null; paymentSplit?: PaymentSp
 
 function pct(n: number, dec = 1): string { return `${(n * 100).toFixed(dec)}%` }
 
+function fmtDuration(sec: number): string {
+  if (sec <= 0) return '—'
+  const m = Math.floor(sec / 60)
+  const s = Math.round(sec % 60)
+  return m > 0 ? `${m}m ${s}s` : `${s}s`
+}
+
 export function JourneyKPICards({ snapshot, paymentSplit, isLoading }: Props) {
   const conversion = snapshot ? pct(snapshot.overallConversion) : '—'
   const abandon = snapshot ? pct(1 - snapshot.rateStartToSubmit) : '—'
   const abandonHigh = snapshot ? snapshot.rateStartToSubmit < 0.4 : false
+  const avgTime = snapshot ? fmtDuration(snapshot.avgFormCompletionSec) : '—'
 
   if (isLoading) {
     return (
@@ -63,9 +71,9 @@ export function JourneyKPICards({ snapshot, paymentSplit, isLoading }: Props) {
           <Timer className="w-4 h-4 text-[#78716C]" strokeWidth={1.5} />
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-[#1C1917]">4m 32s</span>
+          <span className="text-3xl font-bold text-[#1C1917]">{avgTime}</span>
         </div>
-        <p className="text-[10px] text-[#78716C]/70 italic">Urmează în Faza 3</p>
+        <p className="text-[10px] text-[#78716C]/70 italic">Timp mediu completare formular</p>
       </div>
 
       {/* COD vs Card Split */}

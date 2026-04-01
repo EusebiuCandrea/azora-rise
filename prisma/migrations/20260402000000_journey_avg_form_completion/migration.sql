@@ -1,0 +1,1 @@
+ALTER TABLE "JourneySnapshot" ADD COLUMN "avgFormCompletionSec" DOUBLE PRECISION NOT NULL DEFAULT 0;

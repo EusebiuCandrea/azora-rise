@@ -39,6 +39,7 @@ export interface JourneySnapshotData {
   totalUndelivered: number
   returnRate: number
   undeliveredRate: number
+  avgFormCompletionSec: number
   productBreakdown: ProductBreakdownItem[]
   campaignBreakdown: CampaignBreakdownItem[]
   ga4Data?: unknown
@@ -78,6 +79,20 @@ export async function calculateJourneySnapshot(
       reachedOrderConfirmed: true,
     },
   })
+
+  // Avg form completion time: sessions that have both form start and submit timestamps
+  const completedFormSessions = sessions.filter(
+    (s) => s.reachedFormStart != null && s.reachedFormSubmit != null,
+  )
+  const avgFormCompletionSec =
+    completedFormSessions.length > 0
+      ? completedFormSessions.reduce((sum, s) => {
+          const ms = s.reachedFormSubmit!.getTime() - s.reachedFormStart!.getTime()
+          return sum + Math.max(ms, 0)
+        }, 0) /
+        completedFormSessions.length /
+        1000
+      : 0
 
   // Funnel counts
   const totalProductViews = sessions.filter((s) => s.reachedProductView != null).length
@@ -174,6 +189,7 @@ export async function calculateJourneySnapshot(
       totalUndelivered: 0,
       returnRate: 0,
       undeliveredRate: 0,
+      avgFormCompletionSec,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       productBreakdown: productBreakdown as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -200,6 +216,7 @@ export async function calculateJourneySnapshot(
       totalUndelivered: 0,
       returnRate: 0,
       undeliveredRate: 0,
+      avgFormCompletionSec,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       productBreakdown: productBreakdown as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

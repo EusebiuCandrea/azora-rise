@@ -92,8 +92,10 @@ function snapshotToSteps(s: JourneySnapshotDTO): FunnelStep[] {
 
 interface Props { snapshot?: JourneySnapshotDTO | null; isLoading?: boolean }
 
+const EMPTY_STEPS: FunnelStep[] = MOCK_STEPS.map((s) => ({ label: s.label, value: '—' }))
+
 export function JourneyFunnel({ snapshot, isLoading }: Props) {
-  const steps = snapshot ? snapshotToSteps(snapshot) : MOCK_STEPS
+  const steps = snapshot ? snapshotToSteps(snapshot) : EMPTY_STEPS
 
   if (isLoading) {
     return (
