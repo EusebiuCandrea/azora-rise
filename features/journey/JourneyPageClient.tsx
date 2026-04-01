@@ -30,8 +30,16 @@ export function JourneyPageClient() {
     setIsAnalyzing(true)
     try {
       await fetch('/api/journey/snapshot', { method: 'POST' })
-      await fetch('/api/journey/report', { method: 'POST' })
+      const reportRes = await fetch('/api/journey/report', { method: 'POST' })
+      if (!reportRes.ok) {
+        const err = await reportRes.json().catch(() => ({}))
+        const msg = (err as { error?: string }).error ?? `Eroare ${reportRes.status}`
+        alert(`Generare raport eșuată: ${msg}`)
+        return
+      }
       await queryClient.invalidateQueries({ queryKey: ['journey'] })
+    } catch (e) {
+      alert('Eroare de rețea. Verifică conexiunea și încearcă din nou.')
     } finally {
       setIsAnalyzing(false)
     }
