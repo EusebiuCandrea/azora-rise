@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     'unknown'
 
   if (!checkRateLimit(ip)) {
-    return NextResponse.json({ ok: false, error: 'Too many requests' }, { status: 429 })
+    return NextResponse.json({ ok: false, error: 'Too many requests' }, { status: 429, headers: CORS_HEADERS })
   }
 
   // Parse body
@@ -94,13 +94,13 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400, headers: CORS_HEADERS })
   }
 
   // Validate schema
   const parsed = TrackingPayloadSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ ok: false, error: parsed.error.flatten() }, { status: 400, headers: CORS_HEADERS })
   }
 
   const payload: TrackingPayload = parsed.data
@@ -114,11 +114,11 @@ export async function POST(req: NextRequest) {
     })
     orgExists = org !== null
   } catch {
-    return NextResponse.json({ ok: false, error: 'Database error' }, { status: 500 })
+    return NextResponse.json({ ok: false, error: 'Database error' }, { status: 500, headers: CORS_HEADERS })
   }
 
   if (!orgExists) {
-    return NextResponse.json({ ok: false, error: 'Organization not found' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'Organization not found' }, { status: 400, headers: CORS_HEADERS })
   }
 
   const eventTimestamp = new Date(payload.timestamp)
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch {
-    return NextResponse.json({ ok: false, error: 'Database error' }, { status: 500 })
+    return NextResponse.json({ ok: false, error: 'Database error' }, { status: 500, headers: CORS_HEADERS })
   }
 
   // Upsert JourneySession
