@@ -84,8 +84,16 @@ export interface JourneyAlertDTO {
   createdAt: string
 }
 
+export interface JourneyHistoryPoint {
+  date: string
+  overallConversion: number
+  totalOrders: number
+  totalProductViews: number
+}
+
 export interface JourneyDataResponse {
   snapshot: JourneySnapshotDTO | null
   aiReport: JourneyAIReportDTO | null
   alerts: JourneyAlertDTO[]
+  history: JourneyHistoryPoint[]
 }

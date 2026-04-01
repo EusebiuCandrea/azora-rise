@@ -1,14 +1,28 @@
 import { BarChart2, HeartCrack, Timer } from 'lucide-react'
 import type { JourneySnapshotDTO } from './types'
 
-interface Props { snapshot?: JourneySnapshotDTO | null }
+interface Props { snapshot?: JourneySnapshotDTO | null; isLoading?: boolean }
 
 function pct(n: number, dec = 1): string { return `${(n * 100).toFixed(dec)}%` }
 
-export function JourneyKPICards({ snapshot }: Props) {
-  const conversion = snapshot ? pct(snapshot.overallConversion) : '1.5%'
-  const abandon = snapshot ? pct(1 - snapshot.rateStartToSubmit) : '40.1%'
-  const abandonHigh = snapshot ? snapshot.rateStartToSubmit < 0.4 : true
+export function JourneyKPICards({ snapshot, isLoading }: Props) {
+  const conversion = snapshot ? pct(snapshot.overallConversion) : '—'
+  const abandon = snapshot ? pct(1 - snapshot.rateStartToSubmit) : '—'
+  const abandonHigh = snapshot ? snapshot.rateStartToSubmit < 0.4 : false
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-[#F5F5F4] p-6 rounded-xl flex flex-col gap-3 border border-[#E7E5E4]">
+            <div className="h-2.5 w-24 bg-[#E7E5E4] rounded animate-pulse" />
+            <div className="h-9 w-20 bg-[#E7E5E4] rounded animate-pulse" />
+            <div className="h-2 w-32 bg-[#E7E5E4] rounded animate-pulse" />
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

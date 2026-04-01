@@ -21,6 +21,7 @@ export function JourneyPageClient() {
   const snapshot = data?.snapshot ?? null
   const aiReport = data?.aiReport ?? null
   const alerts = data?.alerts ?? []
+  const history = data?.history ?? []
 
   const criticalAlert = alerts.find((a) => a.severity === 'critical')
 
@@ -61,15 +62,15 @@ export function JourneyPageClient() {
       )}
 
       {/* Funnel */}
-      <JourneyFunnel snapshot={isLoading ? null : snapshot} />
+      <JourneyFunnel snapshot={snapshot} isLoading={isLoading} />
 
       {/* KPI Cards */}
-      <JourneyKPICards snapshot={isLoading ? null : snapshot} />
+      <JourneyKPICards snapshot={snapshot} isLoading={isLoading} />
 
       {/* Split view */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">
         <div className="lg:col-span-2 space-y-8">
-          <JourneyMetricsChart />
+          <JourneyMetricsChart history={history} period={period} />
           <JourneyProductTable products={snapshot?.productBreakdown} />
         </div>
         <JourneyAIPanel

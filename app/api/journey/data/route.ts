@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const rawDays = searchParams.get('days') ?? '30'
   const periodDays = ([7, 30, 90].includes(Number(rawDays)) ? Number(rawDays) : 30) as 7 | 30 | 90
 
-  const [snapshot, alerts] = await Promise.all([
+  const [snapshot, alerts, history] = await Promise.all([
     db.journeySnapshot.findFirst({
       where: { organizationId: orgId, periodDays },
       orderBy: { createdAt: 'desc' },
@@ -27,6 +27,13 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 10,
     }),
+    // Last 30 daily snapshots (periodDays=7) for the conversion rate chart
+    db.journeySnapshot.findMany({
+      where: { organizationId: orgId, periodDays: 7 },
+      orderBy: { date: 'asc' },
+      take: 30,
+      select: { date: true, overallConversion: true, totalOrders: true, totalProductViews: true },
+    }),
   ])
 
   const aiReport = snapshot?.aiReports[0] ?? null
@@ -35,5 +42,6 @@ export async function GET(req: NextRequest) {
     snapshot: snapshot ? { ...snapshot, aiReports: undefined } : null,
     aiReport,
     alerts,
+    history,
   })
 }

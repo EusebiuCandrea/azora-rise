@@ -50,10 +50,33 @@ function snapshotToSteps(s: JourneySnapshotDTO): FunnelStep[] {
   ]
 }
 
-interface Props { snapshot?: JourneySnapshotDTO | null }
+interface Props { snapshot?: JourneySnapshotDTO | null; isLoading?: boolean }
 
-export function JourneyFunnel({ snapshot }: Props) {
+export function JourneyFunnel({ snapshot, isLoading }: Props) {
   const steps = snapshot ? snapshotToSteps(snapshot) : MOCK_STEPS
+
+  if (isLoading) {
+    return (
+      <div className="flex items-stretch gap-0">
+        {MOCK_STEPS.map((step, i) => (
+          <>
+            {i > 0 && (
+              <div key={`arrow-${i}`} className="flex items-center justify-center px-1 flex-shrink-0">
+                <ChevronRight className="w-4 h-4 text-[#D0C5AF]" strokeWidth={2} />
+              </div>
+            )}
+            <div
+              key={step.label}
+              className="flex-1 bg-white border border-[#E7E5E4] p-5 rounded-xl flex flex-col items-center text-center shadow-sm min-w-0"
+            >
+              <div className="h-2.5 w-14 bg-[#E7E5E4] rounded animate-pulse mb-3" />
+              <div className="h-7 w-12 bg-[#E7E5E4] rounded animate-pulse" />
+            </div>
+          </>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-stretch gap-0">
