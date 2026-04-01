@@ -15,6 +15,7 @@ import {
   Plus,
   ShoppingBag,
   TrendingUp,
+  Route,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -56,6 +57,10 @@ const navSections: NavSection[] = [
   {
     label: 'CAMPANII',
     items: [{ href: '/campaigns', label: 'Campanii', icon: BarChart2 }],
+  },
+  {
+    label: 'PARCURS CLIENT',
+    items: [{ href: '/journey', label: 'Parcurs Client', icon: Route }],
   },
   {
     label: 'ANALIZĂ',
