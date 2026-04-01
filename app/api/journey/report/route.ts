@@ -16,7 +16,14 @@ export async function POST() {
     return NextResponse.json({ error: 'No data yet — install tracking on azora-shop first' }, { status: 422 })
   }
 
-  const report = await generateJourneyAIReport(snapshot)
+  let report
+  try {
+    report = await generateJourneyAIReport(snapshot)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[journey/report] Gemini error:', msg)
+    return NextResponse.json({ error: `AI generation failed: ${msg}` }, { status: 500 })
+  }
 
   // Upsert: one report per snapshot (@@unique[snapshotId])
   const saved = await db.journeyAIReport.upsert({
