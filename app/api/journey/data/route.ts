@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   const rawDays = searchParams.get('days') ?? '30'
   const periodDays = ([7, 30, 90].includes(Number(rawDays)) ? Number(rawDays) : 30) as 7 | 30 | 90
 
-  const [snapshot, alerts, history] = await Promise.all([
+  const [snapshot, alerts, history, paymentGroups] = await Promise.all([
     db.journeySnapshot.findFirst({
       where: { organizationId: orgId, periodDays },
       orderBy: { createdAt: 'desc' },
@@ -34,14 +34,28 @@ export async function GET(req: NextRequest) {
       take: 30,
       select: { date: true, overallConversion: true, totalOrders: true, totalProductViews: true },
     }),
+    // COD vs Card split from real orders
+    db.journeySession.groupBy({
+      by: ['paymentMethod'],
+      where: { organizationId: orgId, reachedOrderConfirmed: { not: null }, paymentMethod: { not: null } },
+      _count: { _all: true },
+    }),
   ])
 
   const aiReport = snapshot?.aiReports[0] ?? null
+
+  const totalPayments = paymentGroups.reduce((s, g) => s + g._count._all, 0)
+  const codCount = paymentGroups.find((g) => g.paymentMethod === 'cod')?._count._all ?? 0
+  const cardCount = paymentGroups.find((g) => g.paymentMethod === 'card')?._count._all ?? 0
+  const paymentSplit = totalPayments > 0
+    ? { codPct: codCount / totalPayments, cardPct: cardCount / totalPayments, total: totalPayments }
+    : null
 
   return NextResponse.json({
     snapshot: snapshot ? { ...snapshot, aiReports: undefined } : null,
     aiReport,
     alerts,
     history,
+    paymentSplit,
   })
 }

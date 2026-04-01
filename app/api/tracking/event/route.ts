@@ -35,6 +35,7 @@ const TrackingPayloadSchema = z.object({
   event: z.string().min(1).max(100),
   session_id: z.string().min(1).max(500),
   ad_source: z.string().max(500).nullish(),
+  campaign_id: z.string().max(128).nullish(),
   organization_id: z.string().min(1),
   timestamp: z.number().int(),
   data: z.record(z.string(), z.unknown()),
@@ -161,6 +162,7 @@ export async function POST(req: NextRequest) {
 
     const timestampUpdate = timestampField ? { [timestampField]: eventTimestamp } : {}
     const adSourceUpdate = payload.ad_source ? { adSource: payload.ad_source } : {}
+    const campaignUpdate = payload.campaign_id ? { campaignId: payload.campaign_id } : {}
     const orderUpdate = isOrderConfirmed
       ? { ...(orderId !== undefined && { orderId }), ...(paymentMethod !== undefined && { paymentMethod }) }
       : {}
@@ -172,12 +174,13 @@ export async function POST(req: NextRequest) {
         sessionId: payload.session_id,
         adSource: payload.ad_source,
         productId,
-        campaignId: null,
+        campaignId: payload.campaign_id ?? null,
         ...timestampUpdate,
       },
       update: {
         ...timestampUpdate,
         ...adSourceUpdate,
+        ...campaignUpdate,
         ...orderUpdate,
         ...(productId !== undefined && { productId }),
       },

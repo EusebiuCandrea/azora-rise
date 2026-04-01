@@ -22,6 +22,7 @@ export function JourneyPageClient() {
   const aiReport = data?.aiReport ?? null
   const alerts = data?.alerts ?? []
   const history = data?.history ?? []
+  const paymentSplit = data?.paymentSplit ?? null
 
   const criticalAlert = alerts.find((a) => a.severity === 'critical')
 
@@ -65,7 +66,7 @@ export function JourneyPageClient() {
       <JourneyFunnel snapshot={snapshot} isLoading={isLoading} />
 
       {/* KPI Cards */}
-      <JourneyKPICards snapshot={snapshot} isLoading={isLoading} />
+      <JourneyKPICards snapshot={snapshot} paymentSplit={paymentSplit} isLoading={isLoading} />
 
       {/* Split view */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-12">

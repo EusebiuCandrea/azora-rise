@@ -91,9 +91,16 @@ export interface JourneyHistoryPoint {
   totalProductViews: number
 }
 
+export interface PaymentSplit {
+  codPct: number
+  cardPct: number
+  total: number
+}
+
 export interface JourneyDataResponse {
   snapshot: JourneySnapshotDTO | null
   aiReport: JourneyAIReportDTO | null
   alerts: JourneyAlertDTO[]
   history: JourneyHistoryPoint[]
+  paymentSplit: PaymentSplit | null
 }

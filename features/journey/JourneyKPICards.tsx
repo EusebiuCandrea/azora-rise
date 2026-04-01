@@ -1,11 +1,11 @@
 import { BarChart2, HeartCrack, Timer } from 'lucide-react'
-import type { JourneySnapshotDTO } from './types'
+import type { JourneySnapshotDTO, PaymentSplit } from './types'
 
-interface Props { snapshot?: JourneySnapshotDTO | null; isLoading?: boolean }
+interface Props { snapshot?: JourneySnapshotDTO | null; paymentSplit?: PaymentSplit | null; isLoading?: boolean }
 
 function pct(n: number, dec = 1): string { return `${(n * 100).toFixed(dec)}%` }
 
-export function JourneyKPICards({ snapshot, isLoading }: Props) {
+export function JourneyKPICards({ snapshot, paymentSplit, isLoading }: Props) {
   const conversion = snapshot ? pct(snapshot.overallConversion) : '—'
   const abandon = snapshot ? pct(1 - snapshot.rateStartToSubmit) : '—'
   const abandonHigh = snapshot ? snapshot.rateStartToSubmit < 0.4 : false
@@ -73,16 +73,21 @@ export function JourneyKPICards({ snapshot, isLoading }: Props) {
         <h3 className="text-[10px] font-bold uppercase tracking-wider text-[#78716C]">
           COD vs Card Split
         </h3>
-        <div className="flex flex-col gap-2 mt-auto">
-          <div className="flex justify-between text-[10px] font-bold text-[#1C1917]">
-            <span>RAMBURS 68%</span>
-            <span>CARD 32%</span>
+        {paymentSplit ? (
+          <div className="flex flex-col gap-2 mt-auto">
+            <div className="flex justify-between text-[10px] font-bold text-[#1C1917]">
+              <span>RAMBURS {pct(paymentSplit.codPct, 0)}</span>
+              <span>CARD {pct(paymentSplit.cardPct, 0)}</span>
+            </div>
+            <div className="h-3 w-full bg-[#E7E5E4] rounded-full flex overflow-hidden">
+              <div className="h-full bg-[#D4AF37]" style={{ width: `${paymentSplit.codPct * 100}%` }} />
+              <div className="h-full bg-[#A78A00]" style={{ width: `${paymentSplit.cardPct * 100}%` }} />
+            </div>
+            <p className="text-[10px] text-[#78716C]/70">{paymentSplit.total} comenzi totale</p>
           </div>
-          <div className="h-3 w-full bg-[#E7E5E4] rounded-full flex overflow-hidden">
-            <div className="h-full bg-[#D4AF37]" style={{ width: '68%' }} />
-            <div className="h-full bg-[#A78A00]" style={{ width: '32%' }} />
-          </div>
-        </div>
+        ) : (
+          <p className="text-[10px] text-[#78716C]/70 mt-auto italic">Fără comenzi finalizate încă</p>
+        )}
       </div>
     </div>
   )
