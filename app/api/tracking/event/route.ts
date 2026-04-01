@@ -64,6 +64,18 @@ function getJourneyTimestampField(
   }
 }
 
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
+}
+
 // ─── POST handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -173,5 +185,5 @@ export async function POST(req: NextRequest) {
     // TrackingEvent was already saved — return ok
   }
 
-  return NextResponse.json({ ok: true }, { status: 200 })
+  return NextResponse.json({ ok: true }, { status: 200, headers: CORS_HEADERS })
 }
