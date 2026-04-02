@@ -11,14 +11,7 @@ interface FunnelStep {
   tooltip?: string
 }
 
-const MOCK_STEPS: FunnelStep[] = [
-  { label: 'Impresii', value: '1.2M' },
-  { label: 'Clickuri', value: '45K', rate: '3.75%', rateColor: 'blue' },
-  { label: 'Vizite', value: '12K', rate: '26.6%', rateColor: 'green' },
-  { label: 'Formular', value: '4.2K', rate: '35.0%', rateColor: 'orange' },
-  { label: 'Submit', value: '2.1K', rate: '50.0%', rateColor: 'red' },
-  { label: 'Comenzi', value: '1.8K', rate: '85.7%', rateColor: 'green' },
-]
+const STEP_LABELS = ['Impresii', 'Clickuri', 'Vizite', 'Formular', 'Submit', 'Comenzi']
 
 const rateClasses: Record<string, string> = {
   blue: 'bg-blue-100 text-blue-700',
@@ -92,15 +85,15 @@ function snapshotToSteps(s: JourneySnapshotDTO): FunnelStep[] {
 
 interface Props { snapshot?: JourneySnapshotDTO | null; isLoading?: boolean }
 
-const EMPTY_STEPS: FunnelStep[] = MOCK_STEPS.map((s) => ({ label: s.label, value: '—' }))
+const EMPTY_STEPS: FunnelStep[] = STEP_LABELS.map((label) => ({ label, value: '—' }))
 
 export function JourneyFunnel({ snapshot, isLoading }: Props) {
   const steps = snapshot ? snapshotToSteps(snapshot) : EMPTY_STEPS
 
   if (isLoading) {
     return (
-      <div className="flex items-stretch gap-0">
-        {MOCK_STEPS.map((step, i) => (
+      <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
+        {STEP_LABELS.map((label, i) => (
           <>
             {i > 0 && (
               <div key={`arrow-${i}`} className="flex items-center justify-center px-1 flex-shrink-0">
@@ -108,8 +101,8 @@ export function JourneyFunnel({ snapshot, isLoading }: Props) {
               </div>
             )}
             <div
-              key={step.label}
-              className="flex-1 bg-white border border-[#E7E5E4] p-5 rounded-xl flex flex-col items-center text-center shadow-sm min-w-0"
+              key={label}
+              className="flex-1 bg-white border border-[#E7E5E4] p-5 rounded-xl flex flex-col items-center text-center shadow-sm min-w-[100px]"
             >
               <div className="h-2.5 w-14 bg-[#E7E5E4] rounded animate-pulse mb-3" />
               <div className="h-7 w-12 bg-[#E7E5E4] rounded animate-pulse" />
@@ -121,7 +114,7 @@ export function JourneyFunnel({ snapshot, isLoading }: Props) {
   }
 
   return (
-    <div className="flex items-stretch gap-0">
+    <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
       {steps.map((step, i) => (
         <>
           {i > 0 && (
@@ -131,7 +124,7 @@ export function JourneyFunnel({ snapshot, isLoading }: Props) {
           )}
           <div
             key={step.label}
-            className="group relative flex-1 bg-white border border-[#E7E5E4] p-5 rounded-xl flex flex-col items-center text-center hover:bg-[#FAFAF9] transition-colors shadow-sm min-w-0"
+            className="group relative flex-1 bg-white border border-[#E7E5E4] p-3 md:p-5 rounded-xl flex flex-col items-center text-center hover:bg-[#FAFAF9] transition-colors shadow-sm min-w-[100px]"
           >
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#78716C] mb-3">
               {step.label}
