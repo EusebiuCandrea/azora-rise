@@ -1,8 +1,11 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 const FROM_ADDRESS = 'AZORA <noreply@azora.ro>'
+
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 function escapeHtml(str: string | null | undefined): string {
   if (!str) return ''
@@ -61,6 +64,12 @@ export async function sendAdminReturnNotification(data: ReturnEmailData): Promis
     </p>
   `
 
+  const resend = getResend()
+  if (!resend) {
+    console.error('[email] RESEND_API_KEY env var is not set — email skipped')
+    return
+  }
+
   try {
     await resend.emails.send({
       from: FROM_ADDRESS,
@@ -91,6 +100,9 @@ export async function sendCustomerReturnConfirmation(data: ReturnEmailData): Pro
     <p>Mulțumim că ai ales AZORA!</p>
     <p style="color:#999;font-size:12px;">Echipa AZORA</p>
   `
+
+  const resend = getResend()
+  if (!resend) return
 
   try {
     await resend.emails.send({
