@@ -693,6 +693,7 @@ model Return {
   @@index([organizationId])
   @@index([organizationId, status])
   @@index([organizationId, createdAt])
+  @@index([orderId])
 }
 
 enum ReturnType {

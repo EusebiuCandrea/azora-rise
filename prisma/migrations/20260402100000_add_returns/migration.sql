@@ -39,6 +39,9 @@ CREATE INDEX "Return_organizationId_status_idx" ON "Return"("organizationId", "s
 -- CreateIndex
 CREATE INDEX "Return_organizationId_createdAt_idx" ON "Return"("organizationId", "createdAt");
 
+-- CreateIndex
+CREATE INDEX "Return_orderId_idx" ON "Return"("orderId");
+
 -- AddForeignKey
 ALTER TABLE "Return" ADD CONSTRAINT "Return_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
