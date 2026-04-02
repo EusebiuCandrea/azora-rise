@@ -70,7 +70,7 @@ export default async function ReturnsPage({
             Monitorizarea și gestionarea solicitărilor de retur ale clienților
           </p>
         </div>
-        <AddReturnButton />
+        <AddReturnButton orgId={orgId ?? ''} />
       </div>
 
       {/* Stat cards */}

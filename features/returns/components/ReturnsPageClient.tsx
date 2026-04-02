@@ -4,7 +4,7 @@ import { AddReturnDialog } from './AddReturnDialog'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 
-export function AddReturnButton() {
+export function AddReturnButton({ orgId }: { orgId: string }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
   return (
@@ -21,6 +21,7 @@ export function AddReturnButton() {
         open={open}
         onClose={() => setOpen(false)}
         onCreated={() => router.refresh()}
+        orgId={orgId}
       />
     </>
   )

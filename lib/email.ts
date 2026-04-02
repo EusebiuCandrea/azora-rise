@@ -82,6 +82,52 @@ export async function sendAdminReturnNotification(data: ReturnEmailData): Promis
   }
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  RECEIVED:  'Receptionat',
+  COMPLETED: 'Finalizat',
+  REJECTED:  'Respins',
+}
+
+const STATUS_MESSAGES: Record<string, string> = {
+  RECEIVED:  'Coletul tău a ajuns la noi și este în curs de verificare. Te vom contacta în curând cu detalii despre rambursare sau schimb.',
+  COMPLETED: 'Returul tău a fost procesat cu succes. Dacă ai solicitat ramburs, suma va fi virată în contul bancar indicat în maxim 5-7 zile lucrătoare.',
+  REJECTED:  'Din păcate, cererea ta de retur nu a putut fi aprobată. Pentru mai multe detalii, te rugăm să ne contactezi la <a href="mailto:contact@azora.ro">contact@azora.ro</a>.',
+}
+
+export async function sendCustomerStatusUpdate(
+  customerEmail: string,
+  customerName: string,
+  orderNumber: string,
+  newStatus: 'RECEIVED' | 'COMPLETED' | 'REJECTED',
+): Promise<void> {
+  const resend = getResend()
+  if (!resend) return
+
+  const label = STATUS_LABELS[newStatus]
+  const message = STATUS_MESSAGES[newStatus]
+
+  const html = `
+    <p>Bună ${escapeHtml(customerName)},</p>
+    <p>Statusul returului tău pentru comanda <strong>${escapeHtml(orderNumber)}</strong> a fost actualizat:</p>
+    <p style="font-size:18px;font-weight:700;color:#1a1a2e;">${label}</p>
+    <p>${message}</p>
+    <p>Mulțumim că ai ales AZORA!</p>
+    <p style="color:#999;font-size:12px;">Echipa AZORA</p>
+    <p style="color:#999;font-size:12px;margin-top:16px;">Acesta este un email automat. Te rugăm să nu răspunzi la acest mesaj. Pentru orice întrebare, ne poți contacta la <a href="mailto:contact@azora.ro" style="color:#999;">contact@azora.ro</a>.</p>
+  `
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: customerEmail,
+      subject: `Actualizare retur ${escapeHtml(orderNumber)} — ${label}`,
+      html,
+    })
+  } catch (error) {
+    console.error('[email] sendCustomerStatusUpdate failed:', error)
+  }
+}
+
 export async function sendCustomerReturnConfirmation(data: ReturnEmailData): Promise<void> {
   if (!data.customerEmail) return
 
@@ -99,6 +145,7 @@ export async function sendCustomerReturnConfirmation(data: ReturnEmailData): Pro
     </p>
     <p>Mulțumim că ai ales AZORA!</p>
     <p style="color:#999;font-size:12px;">Echipa AZORA</p>
+    <p style="color:#999;font-size:12px;margin-top:16px;">Acesta este un email automat. Te rugăm să nu răspunzi la acest mesaj. Pentru orice întrebare, ne poți contacta la <a href="mailto:contact@azora.ro" style="color:#999;">contact@azora.ro</a>.</p>
   `
 
   const resend = getResend()

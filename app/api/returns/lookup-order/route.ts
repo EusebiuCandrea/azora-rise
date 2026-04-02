@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     customerName,
     customerEmail: order.email,
+    shopifyOrderId: order.shopifyOrderId,
     orderItems: order.items.map((item) => ({
       shopifyProductId: item.shopifyProductId,
       productId: item.productId,

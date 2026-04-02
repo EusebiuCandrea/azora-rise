@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
+import { sendCustomerStatusUpdate } from '@/lib/email'
 
 export async function GET(
   _request: NextRequest,
@@ -77,6 +78,18 @@ export async function PUT(
       ...(parsed.data.adminNotes !== undefined && { adminNotes: parsed.data.adminNotes }),
     },
   })
+
+  const newStatus = parsed.data.status
+  const statusChanged = newStatus && newStatus !== existing.status
+  const notifyStatuses = ['RECEIVED', 'COMPLETED', 'REJECTED'] as const
+  if (statusChanged && notifyStatuses.includes(newStatus as typeof notifyStatuses[number]) && existing.customerEmail) {
+    void sendCustomerStatusUpdate(
+      existing.customerEmail,
+      existing.customerName,
+      existing.orderNumber,
+      newStatus as 'RECEIVED' | 'COMPLETED' | 'REJECTED',
+    )
+  }
 
   return NextResponse.json(updated)
 }
