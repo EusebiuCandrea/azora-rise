@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   TrendingUp,
   Route,
+  RotateCcw,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -38,7 +39,10 @@ const navSections: NavSection[] = [
   },
   {
     label: 'COMENZI',
-    items: [{ href: '/orders', label: 'Comenzi', icon: ShoppingBag }],
+    items: [
+      { href: '/orders', label: 'Comenzi', icon: ShoppingBag },
+      { href: '/returns', label: 'Retururi', icon: RotateCcw },
+    ],
   },
   {
     label: 'PRODUSE',
