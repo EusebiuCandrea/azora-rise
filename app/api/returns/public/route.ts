@@ -3,7 +3,9 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { sendAdminReturnNotification, sendCustomerReturnConfirmation } from '@/lib/email'
 
-// Rate limit: 10 submissions per hour per IP
+// NOTE: In-memory rate limiter — resets on process restart/redeploy.
+// Suitable for Phase 1 single-instance deployment on Railway.
+// For multi-instance deployments, replace with Redis/Upstash.
 const submitRateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(ip: string): boolean {
@@ -113,9 +115,9 @@ export async function POST(request: NextRequest) {
     ibanHolder: data.ibanHolder ?? undefined,
   }
 
-  await sendAdminReturnNotification(emailData)
+  void sendAdminReturnNotification(emailData)
   if (data.customerEmail) {
-    await sendCustomerReturnConfirmation(emailData)
+    void sendCustomerReturnConfirmation(emailData)
   }
 
   return NextResponse.json({ id: returnRecord.id, orderNumber: data.orderNumber }, { status: 201 })

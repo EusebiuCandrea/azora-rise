@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 
-// Simple in-memory rate limiter: max 20 req/min per IP
+// NOTE: In-memory rate limiter — resets on process restart/redeploy.
+// Suitable for Phase 1 single-instance deployment on Railway.
+// For multi-instance deployments, replace with Redis/Upstash.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {

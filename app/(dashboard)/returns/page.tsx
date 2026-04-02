@@ -5,6 +5,7 @@ import { AddReturnButton } from '@/features/returns/components/ReturnsPageClient
 import { ReturnsFilters } from '@/features/returns/components/ReturnsFilters'
 import Link from 'next/link'
 import type { ReturnStatus, ReturnType } from '@prisma/client'
+import type { ReturnRecord } from '@/features/returns/types'
 
 const PAGE_SIZE = 25
 
@@ -100,7 +101,7 @@ export default async function ReturnsPage({
       </div>
 
       {/* Table */}
-      <ReturnsTable returns={returns as any} />
+      <ReturnsTable returns={returns as ReturnRecord[]} />
 
       {/* Pagination */}
       {total > PAGE_SIZE && (
