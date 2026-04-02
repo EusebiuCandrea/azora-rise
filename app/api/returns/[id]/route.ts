@@ -68,7 +68,7 @@ export async function PUT(
   }
 
   const updated = await db.return.update({
-    where: { id },
+    where: { id, organizationId: orgId },
     data: {
       ...(parsed.data.awbNumber !== undefined && { awbNumber: parsed.data.awbNumber }),
       ...(parsed.data.iban !== undefined && { iban: parsed.data.iban }),
@@ -101,7 +101,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Return not found' }, { status: 404 })
   }
 
-  await db.return.delete({ where: { id } })
+  await db.return.delete({ where: { id, organizationId: orgId } })
 
   return NextResponse.json({ success: true })
 }
