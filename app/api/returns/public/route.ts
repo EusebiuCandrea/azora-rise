@@ -15,6 +15,15 @@ function checkRateLimit(ip: string): boolean {
   }
   if (record.count >= 10) return false
   record.count++
+
+  // Cleanup expired entries every 100 calls
+  if (submitRateLimitMap.size > 1000) {
+    const now2 = Date.now()
+    for (const [key, val] of submitRateLimitMap.entries()) {
+      if (now2 > val.resetAt) submitRateLimitMap.delete(key)
+    }
+  }
+
   return true
 }
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { db } from '@/lib/db'
 
 // Simple in-memory rate limiter: max 20 req/min per IP
@@ -13,8 +14,22 @@ function checkRateLimit(ip: string, maxRequests: number, windowMs: number): bool
   }
   if (record.count >= maxRequests) return false
   record.count++
+
+  // Cleanup expired entries every 100 calls
+  if (rateLimitMap.size > 1000) {
+    const now2 = Date.now()
+    for (const [key, val] of rateLimitMap.entries()) {
+      if (now2 > val.resetAt) rateLimitMap.delete(key)
+    }
+  }
+
   return true
 }
+
+const querySchema = z.object({
+  orderNumber: z.string().regex(/^\d+$/, 'Număr comandă invalid'),
+  orgId: z.string().min(10),
+})
 
 export async function GET(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
@@ -23,17 +38,17 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url)
-  const orderNumber = searchParams.get('orderNumber')?.replace('#', '').trim()
-  const orgId = searchParams.get('orgId')
 
-  if (!orderNumber || !orgId) {
-    return NextResponse.json({ error: 'Parametri lipsă' }, { status: 400 })
+  const result = querySchema.safeParse({
+    orderNumber: searchParams.get('orderNumber')?.replace('#', '').trim() ?? '',
+    orgId: searchParams.get('orgId') ?? '',
+  })
+
+  if (!result.success) {
+    return NextResponse.json({ error: 'Parametri invalizi' }, { status: 400 })
   }
 
-  // Validate orgId format (basic check)
-  if (!/^[a-z0-9-]{10,}$/i.test(orgId)) {
-    return NextResponse.json({ error: 'Organizație invalidă' }, { status: 400 })
-  }
+  const { orderNumber, orgId } = result.data
 
   const order = await db.order.findFirst({
     where: {
@@ -57,8 +72,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Comanda nu a fost găsită' }, { status: 404 })
   }
 
+  // Extract customer name from shopifyData if available
+  const shopifyData = order.shopifyData as Record<string, unknown> | null
+  const customerName = (shopifyData?.customer as Record<string, unknown> | null)?.displayName as string
+    ?? (shopifyData?.billingAddress as Record<string, unknown> | null)?.name as string
+    ?? order.email
+    ?? 'Client'
+
   return NextResponse.json({
-    customerName: order.email ?? 'Client',
+    customerName,
     customerEmail: order.email,
     orderItems: order.items.map((item) => ({
       shopifyProductId: item.shopifyProductId,
