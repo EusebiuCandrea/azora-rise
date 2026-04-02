@@ -53,6 +53,7 @@ model Organization {
   journeySnapshots JourneySnapshot[]
   journeyAIReports JourneyAIReport[]
   journeyAlerts    JourneyAlert[]
+  returns          Return[]
 }
 
 model OrganizationMember {
@@ -325,6 +326,7 @@ model Order {
   updatedAt       DateTime    @updatedAt
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   items           OrderItem[]
+  returns         Return[]
 
   @@unique([organizationId, shopifyOrderId])
   @@index([organizationId])
@@ -660,4 +662,48 @@ enum JourneyAlertType {
   LOW_SCROLL_RATE
   AD_CLICK_DROP
   CONVERSION_DROP
+}
+
+// ─── Sub-proiect 7: Returns Management ────────────────────────────────────────
+
+model Return {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orderId        String?
+  order          Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  shopifyOrderId String
+  orderNumber    String
+  customerName   String
+  customerEmail  String?
+  returnType     ReturnType
+  productTitle   String
+  productId      String?
+  variantTitle   String?
+  sku            String?
+  reason         String
+  awbNumber      String?
+  iban           String?
+  ibanHolder     String?
+  status         ReturnStatus @default(NEW)
+  adminNotes     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+}
+
+enum ReturnType {
+  REFUND
+  EXCHANGE
+}
+
+enum ReturnStatus {
+  NEW
+  RECEIVED
+  APPROVED
+  COMPLETED
+  REJECTED
 }
