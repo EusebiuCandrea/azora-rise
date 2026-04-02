@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/Toaster'
+
+const fieldClass = 'mt-1 w-full rounded-lg border border-[#E7E5E4] bg-[#F5F5F4] px-3 py-2 text-sm text-[#1C1917] placeholder:text-[#A8A29E] outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-colors'
 
 interface Props {
   open: boolean
@@ -74,72 +74,75 @@ export function AddReturnDialog({ open, onClose, onCreated }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="orderNumber">Nr. comandă *</Label>
-              <Input id="orderNumber" value={form.orderNumber} onChange={(e) => set('orderNumber', e.target.value)} required placeholder="#1023" />
+              <Label htmlFor="orderNumber" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Nr. comandă *</Label>
+              <input id="orderNumber" className={fieldClass} value={form.orderNumber} onChange={(e) => set('orderNumber', e.target.value)} required placeholder="#1023" />
             </div>
             <div>
-              <Label htmlFor="shopifyOrderId">Shopify Order ID *</Label>
-              <Input id="shopifyOrderId" value={form.shopifyOrderId} onChange={(e) => set('shopifyOrderId', e.target.value)} required placeholder="gid://shopify/Order/..." />
+              <Label htmlFor="shopifyOrderId" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Shopify Order ID *</Label>
+              <input id="shopifyOrderId" className={fieldClass} value={form.shopifyOrderId} onChange={(e) => set('shopifyOrderId', e.target.value)} required placeholder="gid://shopify/Order/..." />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="customerName">Nume client *</Label>
-              <Input id="customerName" value={form.customerName} onChange={(e) => set('customerName', e.target.value)} required />
+              <Label htmlFor="customerName" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Nume client *</Label>
+              <input id="customerName" className={fieldClass} value={form.customerName} onChange={(e) => set('customerName', e.target.value)} required />
             </div>
             <div>
-              <Label htmlFor="customerEmail">Email client</Label>
-              <Input id="customerEmail" type="email" value={form.customerEmail} onChange={(e) => set('customerEmail', e.target.value)} placeholder="opțional" />
+              <Label htmlFor="customerEmail" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Email client</Label>
+              <input id="customerEmail" type="email" className={fieldClass} value={form.customerEmail} onChange={(e) => set('customerEmail', e.target.value)} placeholder="opțional" />
             </div>
           </div>
           <div>
-            <Label>Tip retur *</Label>
-            <div className="flex gap-4 mt-1">
+            <Label className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Tip retur *</Label>
+            <div className="flex gap-6 mt-2">
               {(['REFUND', 'EXCHANGE'] as const).map((t) => (
                 <label key={t} className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="returnType" value={t} checked={form.returnType === t} onChange={() => set('returnType', t)} />
-                  <span className="text-sm">{t === 'REFUND' ? 'Ramburs bani' : 'Schimb produs'}</span>
+                  <input type="radio" name="returnType" value={t} checked={form.returnType === t} onChange={() => set('returnType', t)} className="accent-[#D4AF37]" />
+                  <span className="text-sm font-medium text-[#1C1917]">{t === 'REFUND' ? 'Ramburs bani' : 'Schimb produs'}</span>
                 </label>
               ))}
             </div>
           </div>
           <div>
-            <Label htmlFor="productTitle">Produs *</Label>
-            <Input id="productTitle" value={form.productTitle} onChange={(e) => set('productTitle', e.target.value)} required />
+            <Label htmlFor="productTitle" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Produs *</Label>
+            <input id="productTitle" className={fieldClass} value={form.productTitle} onChange={(e) => set('productTitle', e.target.value)} required />
           </div>
           <div>
-            <Label htmlFor="reason">Motiv *</Label>
-            <Textarea id="reason" value={form.reason} onChange={(e) => set('reason', e.target.value)} required rows={2} />
+            <Label htmlFor="reason" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Motiv *</Label>
+            <textarea id="reason" className={`${fieldClass} resize-none`} value={form.reason} onChange={(e) => set('reason', e.target.value)} required rows={3} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="awbNumber">AWB colet</Label>
-              <Input id="awbNumber" value={form.awbNumber} onChange={(e) => set('awbNumber', e.target.value)} placeholder="opțional" />
+              <Label htmlFor="awbNumber" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">AWB colet</Label>
+              <input id="awbNumber" className={fieldClass} value={form.awbNumber} onChange={(e) => set('awbNumber', e.target.value)} placeholder="opțional" />
             </div>
             <div>
-              <Label htmlFor="variantTitle">Variantă produs</Label>
-              <Input id="variantTitle" value={form.variantTitle} onChange={(e) => set('variantTitle', e.target.value)} placeholder="opțional" />
+              <Label htmlFor="variantTitle" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Variantă produs</Label>
+              <input id="variantTitle" className={fieldClass} value={form.variantTitle} onChange={(e) => set('variantTitle', e.target.value)} placeholder="opțional" />
             </div>
           </div>
           {form.returnType === 'REFUND' && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="iban">IBAN</Label>
-                <Input id="iban" value={form.iban} onChange={(e) => set('iban', e.target.value)} placeholder="RO..." />
-              </div>
-              <div>
-                <Label htmlFor="ibanHolder">Titular cont</Label>
-                <Input id="ibanHolder" value={form.ibanHolder} onChange={(e) => set('ibanHolder', e.target.value)} />
+            <div className="rounded-lg border border-[#D4AF37]/30 bg-[#FFFBEB] p-3 space-y-3">
+              <p className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wide">Date rambursare</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="iban" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">IBAN</Label>
+                  <input id="iban" className={fieldClass} value={form.iban} onChange={(e) => set('iban', e.target.value)} placeholder="RO49 RZBR..." />
+                </div>
+                <div>
+                  <Label htmlFor="ibanHolder" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Titular cont</Label>
+                  <input id="ibanHolder" className={fieldClass} value={form.ibanHolder} onChange={(e) => set('ibanHolder', e.target.value)} />
+                </div>
               </div>
             </div>
           )}
           <div>
-            <Label htmlFor="adminNotes">Note admin</Label>
-            <Textarea id="adminNotes" value={form.adminNotes} onChange={(e) => set('adminNotes', e.target.value)} rows={2} placeholder="opțional" />
+            <Label htmlFor="adminNotes" className="text-xs font-semibold text-[#78716C] uppercase tracking-wide">Note admin</Label>
+            <textarea id="adminNotes" className={`${fieldClass} resize-none`} value={form.adminNotes} onChange={(e) => set('adminNotes', e.target.value)} rows={2} placeholder="opțional" />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-1 border-t border-[#E7E5E4]">
             <Button type="button" variant="outline" onClick={onClose}>Anulează</Button>
-            <Button type="submit" disabled={loading} style={{ background: '#D4AF37', color: '#1C1917' }}>
+            <Button type="submit" disabled={loading} style={{ background: '#D4AF37', color: '#1C1917', fontWeight: 600 }}>
               {loading ? 'Se salvează...' : 'Adaugă returul'}
             </Button>
           </div>

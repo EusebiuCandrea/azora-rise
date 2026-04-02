@@ -86,7 +86,7 @@
 
     /* Borders & inputs */
     --border: #E7E5E4;
-    --input: #FFFFFF;
+    --input: #E7E5E4;
     --ring: #D4AF37;
 
     /* Charts */
@@ -128,7 +128,7 @@
     --accent-foreground: #1C1917;
     --destructive: #DC2626;
     --border: #E7E5E4;
-    --input: #FFFFFF;
+    --input: #E7E5E4;
     --ring: #D4AF37;
     --chart-1: #D4AF37;
     --chart-2: #292524;
