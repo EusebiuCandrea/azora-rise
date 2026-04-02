@@ -12,7 +12,7 @@ export function JourneyProductTable({ products }: Props) {
   return (
     <div className="bg-white border border-[#E7E5E4] rounded-2xl shadow-sm overflow-hidden">
       <div className="p-6 border-b border-[#E7E5E4]">
-        <h4 className="text-xl font-semibold text-[#1C1917]">Defalcare per Produs</h4>
+        <h4 className="text-xl font-semibold text-[#1C1917]">Performanță per Produs</h4>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">

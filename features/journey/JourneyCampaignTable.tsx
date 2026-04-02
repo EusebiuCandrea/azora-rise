@@ -45,7 +45,7 @@ export function JourneyCampaignTable({ campaigns }: Props) {
     <div className="bg-white border border-[#E7E5E4] rounded-2xl shadow-sm overflow-hidden">
       <div className="p-6 border-b border-[#E7E5E4]">
         <h4 className="text-xl font-semibold text-[#1C1917]">Performanță Campanii</h4>
-        <p className="text-sm text-[#78716C] mt-1">Impresii și click-uri din Meta Ads · Vizite și comenzi din tracking site</p>
+        <p className="text-sm text-[#78716C] mt-1">Doar campaniile active · Impresii și click-uri din Meta Ads · Vizite și comenzi din tracking site</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">

@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { JourneySnapshotDTO } from './types'
@@ -92,38 +93,34 @@ export function JourneyFunnel({ snapshot, isLoading }: Props) {
 
   if (isLoading) {
     return (
-      <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
+      <div className="flex items-stretch gap-0 overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {STEP_LABELS.map((label, i) => (
-          <>
+          <Fragment key={label}>
             {i > 0 && (
-              <div key={`arrow-${i}`} className="flex items-center justify-center px-1 flex-shrink-0">
+              <div className="flex items-center justify-center px-1 flex-shrink-0">
                 <ChevronRight className="w-4 h-4 text-[#D0C5AF]" strokeWidth={2} />
               </div>
             )}
-            <div
-              key={label}
-              className="flex-1 bg-white border border-[#E7E5E4] p-5 rounded-xl flex flex-col items-center text-center shadow-sm min-w-[100px]"
-            >
+            <div className="flex-1 bg-white border border-[#E7E5E4] p-5 rounded-xl flex flex-col items-center text-center shadow-sm min-w-[100px]">
               <div className="h-2.5 w-14 bg-[#E7E5E4] rounded animate-pulse mb-3" />
               <div className="h-7 w-12 bg-[#E7E5E4] rounded animate-pulse" />
             </div>
-          </>
+          </Fragment>
         ))}
       </div>
     )
   }
 
   return (
-    <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
+    <div className="flex items-stretch gap-0 overflow-x-auto md:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {steps.map((step, i) => (
-        <>
+        <Fragment key={step.label}>
           {i > 0 && (
-            <div key={`arrow-${i}`} className="flex items-center justify-center px-1 flex-shrink-0">
+            <div className="flex items-center justify-center px-1 flex-shrink-0">
               <ChevronRight className="w-4 h-4 text-[#D0C5AF]" strokeWidth={2} />
             </div>
           )}
           <div
-            key={step.label}
             className="group relative flex-1 bg-white border border-[#E7E5E4] p-3 md:p-5 rounded-xl flex flex-col items-center text-center hover:bg-[#FAFAF9] transition-colors shadow-sm min-w-[100px]"
           >
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#78716C] mb-3">
@@ -148,7 +145,7 @@ export function JourneyFunnel({ snapshot, isLoading }: Props) {
               </div>
             )}
           </div>
-        </>
+        </Fragment>
       ))}
     </div>
   )

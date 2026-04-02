@@ -64,7 +64,7 @@ export async function calculateJourneySnapshot(
   const campaignMetrics = await db.campaignMetrics.findMany({
     where: {
       date: { gte: startDate },
-      campaign: { organizationId: orgId },
+      campaign: { organizationId: orgId, status: 'ACTIVE' },
     },
     select: { impressions: true, clicks: true },
   })
@@ -167,7 +167,7 @@ export async function calculateJourneySnapshot(
 
   // Campaign breakdown — join CampaignMetrics (impressions/clicks) + JourneySession (visits/orders)
   const campaignsWithMetrics = await db.campaign.findMany({
-    where: { organizationId: orgId },
+    where: { organizationId: orgId, status: 'ACTIVE' },
     select: {
       id: true,
       metaCampaignId: true,
