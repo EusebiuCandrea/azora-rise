@@ -1,30 +1,33 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentOrgId } from '@/features/auth/helpers'
-import { getPresignedUploadUrl } from '@/lib/r2'
+import { getPresignedUploadUrlForKey } from '@/lib/r2'
 import { db } from '@/lib/db'
 
 const VIDEO_TYPES = ['video/mp4', 'video/quicktime']
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const AUDIO_TYPES = ['audio/mpeg', 'audio/mp4']
+const ALLOWED = [...VIDEO_TYPES, ...IMAGE_TYPES, ...AUDIO_TYPES]
 
 function contentTypeToAssetType(ct: string): 'VIDEO' | 'IMAGE' | 'AUDIO' {
   if (VIDEO_TYPES.includes(ct)) return 'VIDEO'
   if (IMAGE_TYPES.includes(ct)) return 'IMAGE'
-  if (AUDIO_TYPES.includes(ct)) return 'AUDIO'
-  return 'VIDEO'
+  return 'AUDIO'
 }
 
-function contentTypeToFolder(ct: string): 'clips' | 'images' | 'audio' {
-  if (IMAGE_TYPES.includes(ct)) return 'images'
-  if (AUDIO_TYPES.includes(ct)) return 'audio'
-  return 'clips'
+function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60)
 }
 
 const uploadSchema = z.object({
   filename: z.string().min(1).max(255),
   contentType: z.string().min(1),
   sizeBytes: z.number().int().positive().optional(),
+  adId: z.string().optional(),
 })
 
 export async function POST(request: Request) {
@@ -37,37 +40,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Date invalide', details: result.error.flatten() }, { status: 400 })
   }
 
-  const { filename, contentType, sizeBytes } = result.data
+  const { filename, contentType, sizeBytes, adId } = result.data
 
-  const ALLOWED = [...VIDEO_TYPES, ...IMAGE_TYPES, ...AUDIO_TYPES]
   if (!ALLOWED.includes(contentType)) {
     return NextResponse.json({ error: 'Tip de fișier neacceptat' }, { status: 400 })
   }
 
   const sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const folder = contentTypeToFolder(contentType)
   const assetType = contentTypeToAssetType(contentType)
 
-  try {
-    const uploadUrl = await getPresignedUploadUrl(orgId, folder, sanitized, contentType)
-    const r2Key = `${orgId}/${folder}/${sanitized}`
+  let r2Key: string
+  let resolvedAdId: string | null = null
 
-    const existingAsset = await db.videoAsset.findFirst({
-      where: {
-        organizationId: orgId,
-        r2Key,
-      },
+  if (adId) {
+    // Verify ad belongs to this org and fetch product
+    const ad = await db.videoAd.findFirst({
+      where: { id: adId, organizationId: orgId },
+      include: { product: { select: { title: true } } },
+    })
+    if (!ad) return NextResponse.json({ error: 'Reclamă negăsită' }, { status: 404 })
+
+    const productSlug = toSlug(ad.product.title)
+    const adSlug = toSlug(ad.name)
+    r2Key = `${orgId}/assets/${productSlug}/${adSlug}/${sanitized}`
+    resolvedAdId = adId
+  } else {
+    r2Key = `${orgId}/assets/_unassigned/${sanitized}`
+  }
+
+  try {
+    const uploadUrl = await getPresignedUploadUrlForKey(r2Key, contentType)
+
+    const existing = await db.videoAsset.findFirst({
+      where: { organizationId: orgId, r2Key },
       select: { id: true },
     })
 
-    if (existingAsset) {
+    if (existing) {
       await db.videoAsset.update({
-        where: { id: existingAsset.id },
-        data: {
-          filename: sanitized,
-          assetType,
-          sizeBytes: sizeBytes ?? null,
-        },
+        where: { id: existing.id },
+        data: { filename: sanitized, assetType, sizeBytes: sizeBytes ?? null, adId: resolvedAdId },
       })
     } else {
       await db.videoAsset.create({
@@ -77,6 +89,7 @@ export async function POST(request: Request) {
           r2Key,
           assetType,
           sizeBytes: sizeBytes ?? null,
+          adId: resolvedAdId,
           tags: [],
         },
       })
