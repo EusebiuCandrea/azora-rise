@@ -1,5 +1,6 @@
 import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
+import { getYesterdayUTC } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
@@ -18,9 +19,7 @@ export default async function CampaignDetailPage({
   const orgId = await getCurrentOrgId(session)
   if (!orgId) notFound()
 
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  yesterday.setHours(23, 59, 59, 999)
+  const yesterday = getYesterdayUTC()
 
   const campaign = await db.campaign.findFirst({
     where: { id, organizationId: orgId },

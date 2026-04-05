@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, getCurrentOrgId } from "@/features/auth/helpers"
 import { db } from "@/lib/db"
+import { getYesterdayUTC } from "@/lib/utils"
 import { decrypt } from "@/lib/crypto"
 import { createCampaign } from "@/features/meta/client"
 
@@ -9,9 +10,7 @@ export async function GET(req: NextRequest) {
   const organizationId = await getCurrentOrgId(session)
   if (!organizationId) return NextResponse.json({ error: "No organization" }, { status: 403 })
 
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  yesterday.setHours(23, 59, 59, 999)
+  const yesterday = getYesterdayUTC()
 
   const campaigns = await db.campaign.findMany({
     where: { organizationId },
@@ -26,10 +25,10 @@ export async function GET(req: NextRequest) {
     const totalSpend = campaign.metrics.reduce((sum, m) => sum + m.spend, 0)
     const totalPurchases = campaign.metrics.reduce((sum, m) => sum + m.purchases, 0)
     const latestRoas = campaign.metrics[0]?.roas ?? null
-    const avgRoas =
-      campaign.metrics.length > 0
-        ? campaign.metrics.reduce((sum, m) => sum + (m.roas ?? 0), 0) / campaign.metrics.length
-        : null
+    const metricsWithRoas = campaign.metrics.filter(m => m.roas != null)
+    const avgRoas = metricsWithRoas.length > 0
+      ? metricsWithRoas.reduce((sum, m) => sum + m.roas!, 0) / metricsWithRoas.length
+      : null
 
     return {
       ...campaign,
