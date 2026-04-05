@@ -1,9 +1,10 @@
 import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { LibrarySidebar } from '@/features/videos/components/LibrarySidebar'
 import { AssetUploaderSection } from '@/features/videos/components/AssetUploaderSection'
-import { Image as ImageIcon, HardDrive, Upload } from 'lucide-react'
+import { Image as ImageIcon, HardDrive, Upload, LayoutTemplate } from 'lucide-react'
 
 function AssetCardShell({ asset }: { asset: any }) {
   const isVideo = asset.assetType === 'VIDEO'
@@ -50,6 +51,15 @@ function AssetCardShell({ asset }: { asset: any }) {
       <div className="p-3">
         <p className="text-sm font-medium text-[#1C1917] truncate">{asset.filename}</p>
         <p className="text-xs text-[#78716C] mt-0.5">{sizeDisplay}</p>
+        {isVideo && (
+          <Link
+            href={`/videos/library/formats/${asset.id}`}
+            className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#78716C] hover:text-[#D4AF37] transition-colors"
+          >
+            <LayoutTemplate className="w-3 h-3" strokeWidth={1.5} />
+            Generează formate
+          </Link>
+        )}
       </div>
     </div>
   )
