@@ -50,6 +50,9 @@ export interface MetaInsights {
   ctr?: string
   reach?: string
   frequency?: string
+  quality_ranking?: string
+  engagement_rate_ranking?: string
+  conversion_rate_ranking?: string
   actions?: Array<{ action_type: string; value: string }>
   action_values?: Array<{ action_type: string; value: string }>
   video_avg_time_watched_actions?: Array<{ action_type: string; value: string }>
@@ -271,7 +274,7 @@ export async function fetchAdSets(
   const data = await metaFetch<{ data: MetaAdSet[] }>(
     `${campaignId}/adsets`,
     accessToken,
-    { fields, limit: "200" }
+    { fields, limit: "200", effective_status: '["ACTIVE","PAUSED","ARCHIVED"]' }
   )
   return data.data
 }
@@ -286,6 +289,7 @@ export async function fetchAds(
   const data = await metaFetch<{ data: MetaAd[] }>(`${adSetId}/ads`, accessToken, {
     fields,
     limit: "200",
+    effective_status: '["ACTIVE","PAUSED","ARCHIVED","DELETED"]',
   })
   return data.data
 }
@@ -299,7 +303,7 @@ export async function fetchCampaignInsights(
   dateTo: string,
   level: "campaign" | "adset" | "ad" = "campaign"
 ): Promise<MetaInsights[]> {
-  const fields = [
+  const baseFields = [
     "campaign_id",
     "adset_id",
     "ad_id",
@@ -321,7 +325,11 @@ export async function fetchCampaignInsights(
     "video_p75_watched_actions",
     "video_p95_watched_actions",
     "video_thruplay_watched_actions",
-  ].join(",")
+  ]
+  const adLevelFields = level === "ad"
+    ? [...baseFields, "quality_ranking", "engagement_rate_ranking", "conversion_rate_ranking"]
+    : baseFields
+  const fields = adLevelFields.join(",")
 
   const data = await metaFetch<{ data: MetaInsights[] }>(
     `${adAccountId}/insights`,

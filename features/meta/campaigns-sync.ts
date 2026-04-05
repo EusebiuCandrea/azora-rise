@@ -374,6 +374,18 @@ export async function syncAdMetrics(
       update: metricsData,
     })
 
+    // Update ranking fields on the Ad record (latest value wins across days)
+    if (insight.quality_ranking || insight.engagement_rate_ranking || insight.conversion_rate_ranking) {
+      await db.ad.update({
+        where: { id: ad.id },
+        data: {
+          ...(insight.quality_ranking && { qualityRanking: insight.quality_ranking }),
+          ...(insight.engagement_rate_ranking && { engagementRateRanking: insight.engagement_rate_ranking }),
+          ...(insight.conversion_rate_ranking && { conversionRateRanking: insight.conversion_rate_ranking }),
+        },
+      })
+    }
+
     metricsUpserted++
   }
 

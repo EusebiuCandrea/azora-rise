@@ -276,18 +276,21 @@ model AdSet {
 }
 
 model Ad {
-  id             String      @id @default(cuid())
-  organizationId String
-  adSetId        String
-  metaAdId       String      @unique
-  name           String
-  status         String
-  creativeType   String?
-  creativeUrl    String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  adSet          AdSet       @relation(fields: [adSetId], references: [id], onDelete: Cascade)
-  metrics        AdMetrics[]
+  id                      String      @id @default(cuid())
+  organizationId          String
+  adSetId                 String
+  metaAdId                String      @unique
+  name                    String
+  status                  String
+  creativeType            String?
+  creativeUrl             String?
+  qualityRanking          String?
+  engagementRateRanking   String?
+  conversionRateRanking   String?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+  adSet                   AdSet       @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+  metrics                 AdMetrics[]
 
   @@index([adSetId])
   @@index([organizationId])
