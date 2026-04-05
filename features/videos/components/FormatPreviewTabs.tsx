@@ -257,7 +257,7 @@ export function FormatPreviewTabs({
                     <button
                       onClick={(e) => { e.stopPropagation(); setRenderStates((s) => ({ ...s, [f.id]: 'idle' })); setDownloadUrls((d) => ({ ...d, [f.id]: '' })) }}
                       className="px-1.5 h-6 text-[9px] text-[#78716C] hover:text-[#1C1917] border border-[#E7E5E4] rounded-lg transition-colors"
-                      title="Re-renderează"
+                      title="Regenerează"
                     >
                       ↺
                     </button>
@@ -283,9 +283,9 @@ export function FormatPreviewTabs({
             }`}
           >
             {renderingAny ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Randează...</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> Se procesează...</>
             ) : (
-              <>Renderează {selectedFormats.filter((f) => renderStates[f.id] !== 'done').length} format{selectedFormats.filter((f) => renderStates[f.id] !== 'done').length !== 1 ? 'e' : ''}</>
+              <>Generează {selectedFormats.filter((f) => renderStates[f.id] !== 'done').length} format{selectedFormats.filter((f) => renderStates[f.id] !== 'done').length !== 1 ? 'e' : ''}</>
             )}
           </button>
         )}
@@ -312,7 +312,7 @@ export function FormatPreviewTabs({
       </div>
 
       {!allSelectedDone && (
-        <p className="text-[11px] text-[#78716C]">Randarea durează 30–90s per format · se procesează secvențial · fișierele sunt disponibile 1h</p>
+        <p className="text-[11px] text-[#78716C]">Procesarea durează 30–90s per format · se generează secvențial · fișierele sunt disponibile 1h</p>
       )}
 
       {/* CLI section — collapsed */}
