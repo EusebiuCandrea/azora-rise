@@ -64,8 +64,8 @@ export function calculateProductProfitability(
     : cost.cogs
   const vatDeducted = cogsNet < cost.cogs ? cost.cogs - cogsNet : 0
 
-  // 3. Taxa Shopify — aplicată pe prețul brut
-  const shopifyFee = price * shopifyFeeRate
+  // 3. Taxa Shopify — aplicată pe revenue-ul net (fără TVA), nu pe prețul brut
+  const shopifyFee = revenueNet * shopifyFeeRate
 
   // 4. Transport net — pozitiv dacă clientul plătește mai mult decât costul curier, negativ altfel
   const netTransport = orgSettings.netTransportPerUnit !== undefined
@@ -75,8 +75,9 @@ export function calculateProductProfitability(
   // 5. Profit brut — transport net și packaging vin din org settings
   const grossProfit = revenueNet - cogsNet + netTransport - orgSettings.packagingCost - shopifyFee
 
-  // 6. Provizion retururi
-  const returnsProvision = grossProfit * returnRate
+  // 6. Provizion retururi — 50% din COGS per unitate estimat returnată
+  // (aliniată cu profitability-engine.ts: estimatedReturns × cogs × 0.5)
+  const returnsProvision = returnRate * cost.cogs * 0.5
 
   // 7. Profit înainte de impozit
   const profitPreTax = grossProfit - returnsProvision

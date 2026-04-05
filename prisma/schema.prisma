@@ -29,6 +29,7 @@ model Organization {
   shopifyMonthlyFee      Float              @default(140)   // RON/lună — abonament Shopify Basic (~29 USD)
   packagingMonthlyBudget Float              @default(0)     // RON/lună — buget cumparare ambalaje
   shippingCostDefault    Float              @default(20)    // RON/comandă — cost transport implicit
+  targetProfitMarginPct  Float              @default(0.20)  // target profit 20% — folosit pentru CPP_target și ROAS_target
   isVatPayer             Boolean            @default(true)  // firmă plătitoare de TVA
   ordersLastSyncedAt     DateTime?
   ordersSyncCursor       String?
@@ -499,6 +500,7 @@ enum AlertType {
   LANDING_PAGE_DROP
   NO_ADD_TO_CART
   HOOK_RATE_LOW
+  HALF_BE_CPP_NO_PURCHASE
 }
 
 // ─── Sub-proiect 5: Profitability Engine ──────────────────────────────────────

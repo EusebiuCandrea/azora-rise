@@ -15,6 +15,7 @@ export interface OrganizationTaxConfig {
   shopifyFeeRate: number        // ex: 0.02 = 2%
   eurToRon: number              // cursul de schimb aplicabil
   isVatPayer: boolean
+  targetProfitMarginPct: number  // ex: 0.20 = 20% profit target
 }
 
 export interface SalesData {
@@ -62,6 +63,22 @@ export interface ProductProfitabilityResult {
   grossMarginPct: number
   operatingMarginPct: number
   netMarginPct: number
+
+  // Marginal Ratio (Blueprint Spreadsheet)
+  productMarginalRatio: number | null  // avgSellingPrice / cogs — validare produs ≥ 2.5
+  marginalRatio: number | null         // grossRevenue / (totalCogs + adsSpendRon)
+
+  // Break-Even KPIs (Blueprint Sheet 3)
+  cppBe: number | null       // (avgPriceExVat*(1-shopifyFeeRate)) - cogs
+  roasBe: number | null      // avgSellingPrice / cppBe
+  halfBeCpp: number | null   // cppBe / 2
+
+  // Target KPIs cu profit margin
+  cppTarget: number | null    // cppBe - avgSellingPrice*targetProfitMarginPct
+  roasTarget: number | null   // avgSellingPrice / cppTarget
+  cpatcTarget: number | null  // cppTarget * (0.025/0.06)
+  cpulcTarget: number | null  // cppTarget * 0.025
+  cpicTarget: number | null   // cppTarget * (0.025/0.045)
 
   roas: number | null           // netRevenue / adsSpendRon
   costPerPurchase: number | null // adsSpendRon / purchases
@@ -151,6 +168,36 @@ export function calculateProductProfitability(
   const operatingMarginPct = revenueExVat > 0 ? (operatingProfit / revenueExVat) * 100 : 0
   const netMarginPct = revenueExVat > 0 ? (netProfit / revenueExVat) * 100 : 0
 
+  // ── Marginal Ratio ──────────────────────────────────────────────────────────
+  const productMarginalRatio = cost.cogs > 0 ? avgSellingPrice / cost.cogs : null
+  const marginalRatioDenominator = sales.unitsSold * cost.cogs + adsSpendRon
+  const marginalRatio = marginalRatioDenominator > 0
+    ? sales.grossRevenue / marginalRatioDenominator
+    : null
+
+  // ── Break-Even KPIs (Blueprint Sheet 3: L11, L12, J6) ───────────────────────
+  const avgPriceExVat = tax.isVatPayer ? avgSellingPrice / (1 + cost.vatRate) : avgSellingPrice
+  const cppBeCalc = avgPriceExVat * (1 - tax.shopifyFeeRate) - cost.cogs
+  const cppBe = cppBeCalc > 0 ? cppBeCalc : null
+  const roasBe = cppBe !== null && cppBe > 0 ? avgSellingPrice / cppBe : null
+  const halfBeCpp = cppBe !== null ? cppBe / 2 : null
+
+  // ── Target KPIs cu profit margin (Blueprint Sheet 3: U5-U9) ──────────────────
+  // Funnel baseline rates (Blueprint Supreme Ecom KPI Sheet, Sheet 3 inputs):
+  // purchase 2.5%, add-to-cart 6%, reached-checkout 4.5%
+  const BLUEPRINT_PURCHASE_RATE = 0.025  // 2.5% din vizitatori cumpără
+  const BLUEPRINT_ATC_RATE = 0.06        // 6% din vizitatori adaugă în coș
+  const BLUEPRINT_CHECKOUT_RATE = 0.045  // 4.5% din vizitatori ajung la checkout
+
+  const cppTargetCalc = cppBe !== null
+    ? cppBe - avgSellingPrice * tax.targetProfitMarginPct
+    : null
+  const cppTarget = cppTargetCalc !== null && cppTargetCalc > 0 ? cppTargetCalc : null
+  const roasTarget = cppTarget !== null && cppTarget > 0 ? avgSellingPrice / cppTarget : null
+  const cpatcTarget = cppTarget !== null ? cppTarget * (BLUEPRINT_PURCHASE_RATE / BLUEPRINT_ATC_RATE) : null
+  const cpulcTarget = cppTarget !== null ? cppTarget * BLUEPRINT_PURCHASE_RATE : null
+  const cpicTarget = cppTarget !== null ? cppTarget * (BLUEPRINT_PURCHASE_RATE / BLUEPRINT_CHECKOUT_RATE) : null
+
   // Ads efficiency
   const roas = adsSpendRon > 0 ? netRevenue / adsSpendRon : null
   const costPerPurchase = ads.purchases > 0 ? adsSpendRon / ads.purchases : null
@@ -198,5 +245,15 @@ export function calculateProductProfitability(
     costPerPurchase,
     breakEvenUnits,
     maxSustainableAdsBudget,
+    productMarginalRatio,
+    marginalRatio,
+    cppBe,
+    roasBe,
+    halfBeCpp,
+    cppTarget,
+    roasTarget,
+    cpatcTarget,
+    cpulcTarget,
+    cpicTarget,
   }
 }

@@ -142,6 +142,19 @@ export async function GET(req: NextRequest, { params }: Props) {
   const perUnitCalc = calculateProductProfitability(product.price, costInput, orgSettings)
   const totalProfit = perUnitCalc.profitNet * totalQuantitySold
 
+  // Break-Even KPIs — Blueprint Formula (Sheet 3, L12)
+  // ROAS_BE = AOV / (avgPriceExVat × (1 - fees%) - COGS)
+  const avgPriceExVat = product.price / (1 + costInput.vatRate)
+  const cppBeCalc = avgPriceExVat * (1 - org.shopifyFeeRate) - costInput.cogs
+  const cppBe = cppBeCalc > 0 ? cppBeCalc : null
+  const roasBe = cppBe != null ? product.price / cppBe : null
+
+  // Target KPIs with 20% profit margin
+  const TARGET_PROFIT_PCT = 0.20
+  const cppTargetCalc = cppBe != null ? cppBe - product.price * TARGET_PROFIT_PCT : null
+  const cppTarget = cppTargetCalc != null && cppTargetCalc > 0 ? cppTargetCalc : null
+  const roasTarget = cppTarget != null ? product.price / cppTarget : null
+
   return NextResponse.json({
     perUnit: {
       ...perUnitCalc,
@@ -151,6 +164,10 @@ export async function GET(req: NextRequest, { params }: Props) {
       shopifyFeeRatePct: Math.round(org.shopifyFeeRate * 100),
       netTransportPerUnit,
       adsSpendPerUnit: totalQuantitySold > 0 ? adsSpendRon / totalQuantitySold : 0,
+      cppBe,
+      roasBe,
+      cppTarget,
+      roasTarget,
     },
     stats: {
       totalQuantitySold,

@@ -52,6 +52,12 @@ type CampaignWithMetrics = Awaited<
     videoPlays: number | null
     videoP25: number | null
   }>
+  metaMappings: Array<{
+    product: {
+      price: number
+      cost: { cogs: number; vatRate: number } | null
+    } | null
+  }>
 }
 
 export async function checkAlertsForOrganization(
@@ -79,6 +85,14 @@ export async function checkAlertsForOrganization(
           videoP25: true,
         },
       },
+      metaMappings: {
+        take: 1,
+        include: {
+          product: {
+            include: { cost: true },
+          },
+        },
+      },
     },
   })
 
@@ -91,6 +105,7 @@ export async function checkAlertsForOrganization(
     await checkLandingPageDropAlert(campaign as CampaignWithMetrics, organizationId)
     await checkNoAddToCartAlert(campaign as CampaignWithMetrics, organizationId)
     await checkHookRateAlert(campaign as CampaignWithMetrics, organizationId)
+    await checkHalfBeCppAlert(campaign as CampaignWithMetrics, organizationId)
   }
 }
 
@@ -267,6 +282,43 @@ async function checkHookRateAlert(
     videoPlays: today.videoPlays,
     videoP25: today.videoP25,
     message: `Hook slab — doar ${Math.round(hookRate * 100)}% din vizionatori trec de primele 25%`,
+  })
+}
+
+async function checkHalfBeCppAlert(
+  campaign: CampaignWithMetrics,
+  organizationId: string
+) {
+  // Needs a linked product with cost to calculate CPP_BE
+  const linkedProduct = campaign.metaMappings?.[0]?.product
+  if (!linkedProduct?.cost) return
+
+  const { price } = linkedProduct
+  const { cogs, vatRate } = linkedProduct.cost
+
+  // Blueprint formula (Sheet 3, L11 + J6):
+  // CPP_BE = avgPriceExVat × (1 - shopifyFeeRate) - COGS
+  const SHOPIFY_FEE_RATE = 0.02
+  const avgPriceExVat = price / (1 + vatRate)
+  const cppBe = avgPriceExVat * (1 - SHOPIFY_FEE_RATE) - cogs
+  if (cppBe <= 0) return
+
+  const halfBeCpp = cppBe / 2
+
+  // Check last 3 days
+  const last3Days = campaign.metrics.slice(0, 3)
+  if (last3Days.length === 0) return
+
+  const totalSpend = last3Days.reduce((sum, m) => sum + m.spend, 0)
+  const totalPurchases = last3Days.reduce((sum, m) => sum + m.purchases, 0)
+
+  if (totalSpend < halfBeCpp || totalPurchases > 0) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.HALF_BE_CPP_NO_PURCHASE, {
+    spend: totalSpend,
+    halfBeCpp,
+    cppBe,
+    message: `Cheltuit ${totalSpend.toFixed(0)} RON (≥ 1/2 CPP_BE = ${halfBeCpp.toFixed(0)} RON) fără nicio comandă în 3 zile — evaluează oprirea campaniei`,
   })
 }
 

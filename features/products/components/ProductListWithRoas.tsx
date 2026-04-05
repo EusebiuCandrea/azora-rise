@@ -35,8 +35,11 @@ function requiredRoasBadge(price: number, cost: ProductCost | null, actualRoas: 
     )
   }
 
-  const marginPct = computeMargin(price, cost)
-  if (marginPct <= 0) {
+  // Blueprint Formula (Sheet 3, L12): ROAS_BE = AOV / (avgPriceExVat × (1 - fees%) - COGS)
+  const SHOPIFY_FEE_RATE = 0.02  // default 2%
+  const avgPriceExVat = price / (1 + cost.vatRate)
+  const cppBe = avgPriceExVat * (1 - SHOPIFY_FEE_RATE) - cost.cogs
+  if (cppBe <= 0) {
     return (
       <div>
         <span className="text-sm font-semibold text-[#DC2626]">∞</span>
@@ -45,27 +48,26 @@ function requiredRoasBadge(price: number, cost: ProductCost | null, actualRoas: 
     )
   }
 
-  const required = 1 / marginPct
+  const roasBe = price / cppBe
 
-  // Color: compare required vs actual store ROAS
-  let color = '#78716C' // gray — no actual data
+  let color = '#78716C'
   let statusText = 'fără date ads'
   if (actualRoas != null) {
-    if (actualRoas > required + 0.3) {
-      color = '#15803D'       // green — profitable
+    if (actualRoas > roasBe + 0.3) {
+      color = '#15803D'
       statusText = 'profitabil'
-    } else if (actualRoas >= required - 0.5) {
-      color = '#D97706'       // orange — borderline
+    } else if (actualRoas >= roasBe - 0.5) {
+      color = '#D97706'
       statusText = 'la limită'
     } else {
-      color = '#DC2626'       // red — unprofitable
+      color = '#DC2626'
       statusText = 'neprofitabil'
     }
   }
 
   return (
     <div>
-      <span className="text-sm font-semibold" style={{ color }}>{required.toFixed(1)}×</span>
+      <span className="text-sm font-semibold" style={{ color }}>{roasBe.toFixed(1)}×</span>
       <p className="text-[10px] mt-0.5" style={{ color: color === '#78716C' ? '#C4C0BA' : color }}>
         {statusText}
       </p>
@@ -106,8 +108,8 @@ export function ProductListWithRoas({ products, actualRoas }: Props) {
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Cost configurat</th>
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Marjă</th>
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">
-              ROAS necesar
-              <span className="ml-1 text-[9px] font-normal normal-case text-[#C4C0BA]" title="ROAS minim pentru ca reclama să fie profitabilă pentru acest produs">?</span>
+              Break-Even ROAS
+              <span className="ml-1 text-[9px] font-normal normal-case text-[#C4C0BA]" title="ROAS minim calculat din costul produsului (Blueprint Formula: AOV / (AOV×(1−fees%) − COGS))">?</span>
             </th>
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Status</th>
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Acțiuni</th>

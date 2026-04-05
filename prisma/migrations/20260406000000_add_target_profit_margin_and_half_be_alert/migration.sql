@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "AlertType" ADD VALUE 'HALF_BE_CPP_NO_PURCHASE';
+
+-- AlterTable
+ALTER TABLE "Organization" ADD COLUMN "targetProfitMarginPct" DOUBLE PRECISION NOT NULL DEFAULT 0.20;

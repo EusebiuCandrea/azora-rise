@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     shopifyFeeRate: org.shopifyFeeRate,
     eurToRon,
     isVatPayer: org.isVatPayer,
+    targetProfitMarginPct: org.targetProfitMarginPct,
   }
 
   // All paid orders this month

@@ -40,6 +40,7 @@ export default async function DashboardPage() {
     shopifyFeeRate: org.shopifyFeeRate,
     eurToRon,
     isVatPayer: org.isVatPayer,
+    targetProfitMarginPct: org.targetProfitMarginPct,
   }
 
   const [orders, prevOrders, campaignMetrics, prevCampaignMetrics, manualExpenses, activeCampaigns, orderItemsInPeriod] =

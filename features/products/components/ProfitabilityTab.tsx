@@ -154,6 +154,37 @@ export function ProfitabilityTab({ productId, price, hasCost, isVatPayer }: Prop
         </div>
       </div>
 
+      {/* Break-Even KPIs — Blueprint */}
+      {perUnit.cppBe != null && (
+        <div className="mt-3 p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg">
+          <p className="text-[11px] font-semibold text-[#92400E] uppercase tracking-wide mb-2">Break-Even KPIs</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div>
+              <p className="text-[10px] text-[#78716C]">CPP Break-Even</p>
+              <p className="text-sm font-semibold text-[#1C1917]">{perUnit.cppBe.toFixed(0)} RON</p>
+              <p className="text-[9px] text-[#A8A29E]">cost maxim per comandă</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-[#78716C]">ROAS Break-Even</p>
+              <p className="text-sm font-semibold text-[#1C1917]">{perUnit.roasBe?.toFixed(2)}x</p>
+              <p className="text-[9px] text-[#A8A29E]">ROAS minim fără pierdere</p>
+            </div>
+            {perUnit.cppTarget != null && (
+              <>
+                <div>
+                  <p className="text-[10px] text-[#78716C]">CPP Target (20% profit)</p>
+                  <p className="text-sm font-semibold text-[#15803D]">{perUnit.cppTarget.toFixed(0)} RON</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#78716C]">ROAS Target</p>
+                  <p className="text-sm font-semibold text-[#15803D]">{perUnit.roasTarget?.toFixed(2)}x</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Ads stats — dacă există campanii legate */}
       {hasAds && (
         <div className="bg-white border border-[#E7E5E4] rounded-xl p-4 grid grid-cols-3 gap-4">

@@ -52,6 +52,7 @@ export default async function ProfitabilityPage({
     shopifyFeeRate: org.shopifyFeeRate,
     eurToRon,
     isVatPayer: org.isVatPayer,
+    targetProfitMarginPct: org.targetProfitMarginPct,
   }
 
   const [products, campaignMetricsAgg, periodOrderItems] = await Promise.all([
@@ -207,6 +208,7 @@ export default async function ProfitabilityPage({
       recommendation: rec.type,
       recommendationNote: rec.note,
       hasCostData: true,
+      productMarginalRatio: result.productMarginalRatio,
     }
   })
 
@@ -333,6 +335,9 @@ export default async function ProfitabilityPage({
                 <th className="text-right px-4 py-3">Revenue net</th>
                 <th className="text-right px-4 py-3">Profit net</th>
                 <th className="text-right px-4 py-3">Marjă</th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide" title="Prețul de vânzare / COGS — trebuie să fie ≥ 2.5x (Blueprint)">
+                  Marginal Ratio
+                </th>
                 <th className="text-right px-4 py-3">Ads spend</th>
                 <th className="text-right px-4 py-3">ROAS</th>
                 <th className="text-center px-4 py-3">Recomandare</th>
@@ -341,7 +346,7 @@ export default async function ProfitabilityPage({
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-sm text-[#78716C]">
+                  <td colSpan={9} className="py-10 text-center text-sm text-[#78716C]">
                     Fără produse active.{' '}
                     <Link href="/products" className="text-[#D4AF37] hover:underline">Sincronizează Shopify</Link>
                   </td>
@@ -369,6 +374,19 @@ export default async function ProfitabilityPage({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <MarginCell margin={row.netMarginPct} />
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {row.productMarginalRatio != null ? (
+                        <span className={
+                          row.productMarginalRatio >= 2.5
+                            ? 'text-[#15803D] font-medium'
+                            : row.productMarginalRatio >= 1.5
+                              ? 'text-[#D97706] font-medium'
+                              : 'text-[#DC2626] font-medium'
+                        }>
+                          {row.productMarginalRatio.toFixed(1)}x
+                        </span>
+                      ) : <span className="text-[#C4C0BA]">—</span>}
                     </td>
                     <td className="px-4 py-3 text-right text-[#78716C]">
                       {row.adsSpendRon > 0 ? `${row.adsSpendRon.toFixed(0)} RON` : '—'}
