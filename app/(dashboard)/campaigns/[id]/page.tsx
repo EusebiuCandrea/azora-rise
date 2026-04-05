@@ -25,7 +25,7 @@ export default async function CampaignDetailPage({
 
   const yesterday = new Date(Date.now() - 86400000)
 
-  const [campaign, latestAIReport, scalingSuggestions, adMetrics] = await Promise.all([
+  const [campaign, latestAIReport, scalingSuggestions, adMetrics, adSetData] = await Promise.all([
     db.campaign.findFirst({
       where: { id, organizationId: orgId },
       include: {
@@ -45,6 +45,16 @@ export default async function CampaignDetailPage({
         metrics: {
           where: { date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
           select: { spend: true, impressions: true, clicks: true, purchases: true, purchaseValue: true, ctr: true, videoPlays: true, videoP25: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+    db.adSet.findMany({
+      where: { organizationId: orgId, campaignId: id },
+      include: {
+        metrics: {
+          where: { date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+          select: { spend: true, impressions: true, clicks: true, purchases: true, purchaseValue: true, roas: true, ctr: true, frequency: true },
         },
       },
       orderBy: { createdAt: 'asc' },
@@ -72,6 +82,30 @@ export default async function CampaignDetailPage({
       roas: spend > 0 && purchaseValue > 0 ? purchaseValue / spend : null,
       ctr: avgCtr,
       hookRate: videoPlays > 0 ? videoP25 / videoPlays : null,
+    }
+  })
+
+  const adSetSummaries = adSetData.map((adSet) => {
+    const spend = adSet.metrics.reduce((s, m) => s + m.spend, 0)
+    const impressions = adSet.metrics.reduce((s, m) => s + m.impressions, 0)
+    const clicks = adSet.metrics.reduce((s, m) => s + m.clicks, 0)
+    const purchases = adSet.metrics.reduce((s, m) => s + m.purchases, 0)
+    const purchaseValue = adSet.metrics.reduce((s, m) => s + (m.purchaseValue ?? 0), 0)
+    const avgFrequency = adSet.metrics.filter((m) => m.frequency !== null).length > 0
+      ? adSet.metrics.reduce((s, m) => s + (m.frequency ?? 0), 0) / adSet.metrics.filter((m) => m.frequency !== null).length
+      : null
+    return {
+      id: adSet.id,
+      name: adSet.name,
+      status: adSet.status,
+      dailyBudget: adSet.dailyBudget,
+      spend,
+      impressions,
+      clicks,
+      purchases,
+      roas: spend > 0 && purchaseValue > 0 ? purchaseValue / spend : null,
+      ctr: impressions > 0 ? (clicks / impressions) * 100 : null,
+      frequency: avgFrequency,
     }
   })
 
@@ -238,23 +272,53 @@ export default async function CampaignDetailPage({
 
       <AdCreativeTable ads={adSummaries} />
 
-      {campaign.adSets.length > 0 && (
+      {adSetSummaries.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-[#E7E5E4] bg-white shadow-sm">
           <div className="border-b border-[#E7E5E4] px-5 py-4">
-            <h2 className="text-sm font-semibold text-[#1C1917]">Ad Sets ({campaign.adSets.length})</h2>
+            <h2 className="text-sm font-semibold text-[#1C1917]">Ad Sets ({adSetSummaries.length})</h2>
           </div>
-          <div className="divide-y divide-[#E7E5E4]">
-            {campaign.adSets.map((adSet) => (
-              <div key={adSet.id} className="flex items-center justify-between px-5 py-4">
-                <div>
-                  <p className="text-sm font-medium text-[#1C1917]">{adSet.name}</p>
-                  <p className="mt-0.5 text-xs text-[#78716C]">{adSet.status}</p>
-                </div>
-                <div className="text-right text-sm text-[#78716C]">
-                  {adSet.dailyBudget ? `${adSet.dailyBudget} RON/zi` : '—'}
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#E7E5E4] bg-[#F5F5F4] text-xs uppercase tracking-wide text-[#78716C]">
+                  <th className="px-4 py-3 text-left">Ad Set</th>
+                  <th className="px-4 py-3 text-right">Buget/zi</th>
+                  <th className="px-4 py-3 text-right">Spend (7z)</th>
+                  <th className="px-4 py-3 text-right">CTR</th>
+                  <th className="px-4 py-3 text-right">Frecvență</th>
+                  <th className="px-4 py-3 text-right">Achiziții</th>
+                  <th className="px-4 py-3 text-right">ROAS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adSetSummaries.map((adSet) => (
+                  <tr key={adSet.id} className="border-b border-[#E7E5E4] transition-colors hover:bg-[#FAFAF9]">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-[#1C1917]">{adSet.name}</p>
+                      <p className="text-xs text-[#78716C]">{adSet.status}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right text-[#78716C]">
+                      {adSet.dailyBudget ? `${adSet.dailyBudget} RON` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-[#1C1917]">
+                      {adSet.spend > 0 ? `${adSet.spend.toFixed(0)} RON` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right text-[#78716C]">
+                      {adSet.ctr ? `${adSet.ctr.toFixed(2)}%` : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right text-[#78716C]">
+                      {adSet.frequency ? adSet.frequency.toFixed(1) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-[#1C1917]">
+                      {adSet.purchases}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <RoasBadge roas={adSet.roas} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
