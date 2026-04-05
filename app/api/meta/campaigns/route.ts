@@ -9,10 +9,14 @@ export async function GET(req: NextRequest) {
   const organizationId = await getCurrentOrgId(session)
   if (!organizationId) return NextResponse.json({ error: "No organization" }, { status: 403 })
 
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  yesterday.setHours(23, 59, 59, 999)
+
   const campaigns = await db.campaign.findMany({
     where: { organizationId },
     include: {
-      metrics: { orderBy: { date: "desc" }, take: 30 },
+      metrics: { where: { date: { lte: yesterday } }, orderBy: { date: "desc" }, take: 30 },
       _count: { select: { adSets: true } },
     },
     orderBy: { updatedAt: "desc" },

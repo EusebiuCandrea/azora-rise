@@ -18,10 +18,14 @@ export default async function CampaignDetailPage({
   const orgId = await getCurrentOrgId(session)
   if (!orgId) notFound()
 
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  yesterday.setHours(23, 59, 59, 999)
+
   const campaign = await db.campaign.findFirst({
     where: { id, organizationId: orgId },
     include: {
-      metrics: { orderBy: { date: 'desc' }, take: 30 },
+      metrics: { where: { date: { lte: yesterday } }, orderBy: { date: 'desc' }, take: 30 },
       adSets: { orderBy: { createdAt: 'asc' } },
       alerts: { where: { isResolved: false }, orderBy: { triggeredAt: 'desc' } },
     },

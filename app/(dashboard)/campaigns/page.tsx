@@ -11,6 +11,10 @@ export default async function CampaignsPage() {
   const session = await requireAuth()
   const orgId = await getCurrentOrgId(session)
 
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  yesterday.setHours(23, 59, 59, 999)
+
   const metaConnected = orgId
     ? !!(await db.metaConnection.findUnique({ where: { organizationId: orgId }, select: { id: true } }))
     : false
@@ -19,7 +23,7 @@ export default async function CampaignsPage() {
     ? await db.campaign.findMany({
         where: { organizationId: orgId },
         include: {
-          metrics: { orderBy: { date: 'desc' }, take: 30 },
+          metrics: { where: { date: { lte: yesterday } }, orderBy: { date: 'desc' }, take: 30 },
           _count: { select: { adSets: true } },
         },
         orderBy: { updatedAt: 'desc' },
