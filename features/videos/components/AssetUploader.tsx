@@ -14,12 +14,13 @@ type UploadState =
 
 interface AssetUploaderProps {
   onUploaded: () => void
+  adId?: string
 }
 
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'image/jpeg', 'image/png', 'image/webp', 'audio/mpeg', 'audio/mp4']
 const MAX_SIZE_MB = 500
 
-export function AssetUploader({ onUploaded }: AssetUploaderProps) {
+export function AssetUploader({ onUploaded, adId }: AssetUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<UploadState>({ phase: 'idle' })
 
@@ -56,11 +57,15 @@ export function AssetUploader({ onUploaded }: AssetUploaderProps) {
     setState({ phase: 'uploading', filename: file.name, progress: 0 })
 
     try {
-      // 1. Get presigned URL
       const res = await fetch('/api/assets/upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, contentType: file.type, sizeBytes: file.size }),
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          sizeBytes: file.size,
+          ...(adId ? { adId } : {}),
+        }),
       })
 
       if (!res.ok) {
@@ -70,13 +75,11 @@ export function AssetUploader({ onUploaded }: AssetUploaderProps) {
 
       const { uploadUrl } = await res.json()
 
-      // 2. Upload directly to R2 using XMLHttpRequest for progress tracking
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
-            const pct = Math.round((e.loaded / e.total) * 100)
-            setState({ phase: 'uploading', filename: file.name, progress: pct })
+            setState({ phase: 'uploading', filename: file.name, progress: Math.round((e.loaded / e.total) * 100) })
           }
         })
         xhr.addEventListener('load', () => {
@@ -98,7 +101,6 @@ export function AssetUploader({ onUploaded }: AssetUploaderProps) {
   }
 
   const isDragging = state.phase === 'dragging'
-  const isUploading = state.phase === 'uploading'
 
   return (
     <div
