@@ -7,6 +7,10 @@ import { CampaignStatusBadge } from '@/features/meta/components/CampaignStatusBa
 import { RoasBadge } from '@/features/meta/components/RoasBadge'
 import { CampaignMetricsChart } from '@/features/meta/components/CampaignMetricsChart'
 import { CampaignPauseButton } from '@/features/meta/components/CampaignPauseButton'
+import { CampaignAIPanel } from '@/features/meta/components/CampaignAIPanel'
+import { AdCreativeTable } from '@/features/meta/components/AdCreativeTable'
+import { CampaignReportType } from '@prisma/client'
+import { getScalingSuggestionsForCampaign } from '@/features/meta/scaling-rules'
 
 export default async function CampaignDetailPage({
   params,
@@ -18,24 +22,60 @@ export default async function CampaignDetailPage({
   const orgId = await getCurrentOrgId(session)
   if (!orgId) notFound()
 
-  const campaign = await db.campaign.findFirst({
-    where: { id, organizationId: orgId },
-    include: {
-      metrics: { orderBy: { date: 'desc' }, take: 30 },
-      adSets: { orderBy: { createdAt: 'asc' } },
-      alerts: { where: { isResolved: false }, orderBy: { triggeredAt: 'desc' } },
-    },
-  })
+  const [campaign, latestAIReport, scalingSuggestions, adMetrics] = await Promise.all([
+    db.campaign.findFirst({
+      where: { id, organizationId: orgId },
+      include: {
+        metrics: { orderBy: { date: 'desc' }, take: 30 },
+        adSets: { orderBy: { createdAt: 'asc' } },
+        alerts: { where: { isResolved: false }, orderBy: { triggeredAt: 'desc' } },
+      },
+    }),
+    db.campaignAIReport.findFirst({
+      where: { campaignId: id, reportType: CampaignReportType.CAMPAIGN_DEEP },
+      orderBy: { generatedAt: 'desc' },
+    }),
+    getScalingSuggestionsForCampaign(orgId, id),
+    db.ad.findMany({
+      where: { organizationId: orgId, adSet: { campaign: { id } } },
+      include: {
+        metrics: {
+          where: { date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+          select: { spend: true, impressions: true, clicks: true, purchases: true, purchaseValue: true, ctr: true, videoPlays: true, videoP25: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ])
 
   if (!campaign) notFound()
 
+  const adSummaries = adMetrics.map((ad) => {
+    const spend = ad.metrics.reduce((s, m) => s + m.spend, 0)
+    const impressions = ad.metrics.reduce((s, m) => s + m.impressions, 0)
+    const clicks = ad.metrics.reduce((s, m) => s + m.clicks, 0)
+    const purchases = ad.metrics.reduce((s, m) => s + m.purchases, 0)
+    const purchaseValue = ad.metrics.reduce((s, m) => s + (m.purchaseValue ?? 0), 0)
+    const videoPlays = ad.metrics.reduce((s, m) => s + (m.videoPlays ?? 0), 0)
+    const videoP25 = ad.metrics.reduce((s, m) => s + (m.videoP25 ?? 0), 0)
+    const avgCtr = impressions > 0 ? (clicks / impressions) * 100 : null
+    return {
+      adId: ad.id,
+      adName: ad.name,
+      spend,
+      impressions,
+      clicks,
+      purchases,
+      roas: spend > 0 && purchaseValue > 0 ? purchaseValue / spend : null,
+      ctr: avgCtr,
+      hookRate: videoPlays > 0 ? videoP25 / videoPlays : null,
+    }
+  })
+
   const totalSpend = campaign.metrics.reduce((s, m) => s + m.spend, 0)
   const totalPurchases = campaign.metrics.reduce((s, m) => s + m.purchases, 0)
-  const metricsWithRoas = campaign.metrics.filter((m) => m.roas !== null)
-  const avgRoas =
-    metricsWithRoas.length > 0
-      ? metricsWithRoas.reduce((s, m) => s + (m.roas ?? 0), 0) / metricsWithRoas.length
-      : null
+  const totalPurchaseValue = campaign.metrics.reduce((s, m) => s + (m.purchaseValue ?? 0), 0)
+  const avgRoas = totalSpend > 0 && totalPurchaseValue > 0 ? totalPurchaseValue / totalSpend : null
   const avgCtr =
     campaign.metrics.filter((m) => m.ctr !== null).length > 0
       ? campaign.metrics.filter((m) => m.ctr !== null).reduce((s, m) => s + (m.ctr ?? 0), 0) /
@@ -126,6 +166,20 @@ export default async function CampaignDetailPage({
         ))}
       </div>
 
+      <CampaignAIPanel
+        campaignId={id}
+        scalingSuggestions={scalingSuggestions}
+        initialReport={latestAIReport ? {
+          healthScore: latestAIReport.healthScore,
+          status: latestAIReport.status as 'excellent' | 'good' | 'warning' | 'critical',
+          summary: latestAIReport.summary,
+          problems: latestAIReport.problems as never[],
+          suggestions: latestAIReport.suggestions as never[],
+          videoBrief: latestAIReport.videoBrief as never ?? null,
+          generatedAt: latestAIReport.generatedAt.toISOString(),
+        } : null}
+      />
+
       <div className="rounded-xl border border-[#E7E5E4] bg-white p-5 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold text-[#1C1917]">Evoluție ROAS + Spend (30 zile)</h2>
         <CampaignMetricsChart metrics={chartData} />
@@ -178,6 +232,8 @@ export default async function CampaignDetailPage({
           </table>
         </div>
       </div>
+
+      <AdCreativeTable ads={adSummaries} />
 
       {campaign.adSets.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-[#E7E5E4] bg-white shadow-sm">

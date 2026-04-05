@@ -22,8 +22,6 @@ export function UploadModal({ products, onClose }: UploadModalProps) {
   const [ads, setAds] = useState<PickableAd[]>([])
   const [loadingAds, setLoadingAds] = useState(false)
   const [selectedAd, setSelectedAd] = useState<PickableAd | null>(null)
-  const [uploadKey, setUploadKey] = useState(0)
-
   async function handleProductContinue() {
     if (!selectedProduct) return
     setLoadingAds(true)
@@ -42,7 +40,6 @@ export function UploadModal({ products, onClose }: UploadModalProps) {
 
   function handleUploaded() {
     router.refresh()
-    setUploadKey((k) => k + 1)
   }
 
   const stepTitles: Record<Step, string> = {
@@ -135,7 +132,7 @@ export function UploadModal({ products, onClose }: UploadModalProps) {
                 <span>→</span>
                 <span>🎬 {selectedAd.name}</span>
               </div>
-              <AssetUploader key={uploadKey} onUploaded={handleUploaded} adId={selectedAd.id} />
+              <AssetUploader onUploaded={handleUploaded} adId={selectedAd.id} />
             </div>
           )}
         </div>

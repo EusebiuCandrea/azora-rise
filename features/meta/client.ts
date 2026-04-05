@@ -48,8 +48,17 @@ export interface MetaInsights {
   clicks: string
   cpm?: string
   ctr?: string
+  reach?: string
+  frequency?: string
   actions?: Array<{ action_type: string; value: string }>
   action_values?: Array<{ action_type: string; value: string }>
+  video_avg_time_watched_actions?: Array<{ action_type: string; value: string }>
+  video_p25_watched_actions?: Array<{ action_type: string; value: string }>
+  video_p50_watched_actions?: Array<{ action_type: string; value: string }>
+  video_p75_watched_actions?: Array<{ action_type: string; value: string }>
+  video_p95_watched_actions?: Array<{ action_type: string; value: string }>
+  video_play_actions?: Array<{ action_type: string; value: string }>
+  video_thruplay_watched_actions?: Array<{ action_type: string; value: string }>
 }
 
 export interface TokenValidation {
@@ -81,6 +90,22 @@ export function parsePurchaseValue(insights: MetaInsights): number {
       a.action_type === "offsite_conversion.fb_pixel_purchase"
   )
   return actionValue ? parseFloat(actionValue.value) : 0
+}
+
+export function parseActionCount(
+  insights: MetaInsights,
+  actionType: string
+): number | null {
+  const action = insights.actions?.find((a) => a.action_type === actionType)
+  return action ? parseInt(action.value, 10) : null
+}
+
+export function parseVideoMetric(
+  arr: Array<{ action_type: string; value: string }> | undefined
+): number | null {
+  if (!arr || arr.length === 0) return null
+  const total = arr.reduce((sum, a) => sum + parseFloat(a.value), 0)
+  return total || null
 }
 
 async function metaFetch<T>(
@@ -277,8 +302,17 @@ export async function fetchCampaignInsights(
     "clicks",
     "cpm",
     "ctr",
+    "reach",
+    "frequency",
     "actions",
     "action_values",
+    "video_avg_time_watched_actions",
+    "video_p25_watched_actions",
+    "video_p50_watched_actions",
+    "video_p75_watched_actions",
+    "video_p95_watched_actions",
+    "video_play_actions",
+    "video_thruplay_watched_actions",
   ].join(",")
 
   const data = await metaFetch<{ data: MetaInsights[] }>(
@@ -289,6 +323,7 @@ export async function fetchCampaignInsights(
       level,
       time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
       time_increment: "1",
+      use_account_attribution_setting: "true",
       limit: "2000",
     }
   )

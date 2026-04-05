@@ -1,10 +1,12 @@
 import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
+import { getPresignedDownloadUrl } from '@/lib/r2'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { LibrarySidebar } from '@/features/videos/components/LibrarySidebar'
 import { AssetUploaderSection } from '@/features/videos/components/AssetUploaderSection'
 import { Image as ImageIcon, HardDrive, Upload, LayoutTemplate } from 'lucide-react'
+import { AssetDeleteButton } from '@/features/videos/components/AssetDeleteButton'
 
 function AssetCardShell({ asset }: { asset: any }) {
   const isVideo = asset.assetType === 'VIDEO'
@@ -20,17 +22,36 @@ function AssetCardShell({ asset }: { asset: any }) {
   return (
     <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm overflow-hidden">
       {isVideo && (
-        <div className="relative aspect-video flex items-center justify-center bg-[radial-gradient(circle_at_top,#FFF8DB_0%,#FAFAF9_60%,#F5F5F4_100%)]">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-[#E7E5E4]">
-            <svg className="ml-0.5 w-4 h-4 text-[#B8971F]" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
+        <div className="relative aspect-video bg-black overflow-hidden">
+          {asset.previewUrl ? (
+            <video
+              src={asset.previewUrl}
+              className="w-full h-full object-cover"
+              preload="metadata"
+              muted
+              playsInline
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_top,#FFF8DB_0%,#FAFAF9_60%,#F5F5F4_100%)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-[#E7E5E4]">
+                <svg className="ml-0.5 w-4 h-4 text-[#B8971F]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {isImage && (
-        <div className="aspect-video bg-[#F5F5F4] flex items-center justify-center">
-          <ImageIcon className="w-8 h-8 text-[#E7E5E4]" strokeWidth={1} />
+        <div className="relative aspect-video bg-[#F5F5F4] overflow-hidden">
+          {asset.previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={asset.previewUrl} alt={asset.filename} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ImageIcon className="w-8 h-8 text-[#E7E5E4]" strokeWidth={1} />
+            </div>
+          )}
         </div>
       )}
       {isAudio && (
@@ -51,7 +72,7 @@ function AssetCardShell({ asset }: { asset: any }) {
       <div className="p-3">
         <p className="text-sm font-medium text-[#1C1917] truncate">{asset.filename}</p>
         <p className="text-xs text-[#78716C] mt-0.5">{sizeDisplay}</p>
-        {isVideo && (
+        {(isVideo || isImage) && (
           <Link
             href={`/videos/library/formats/${asset.id}`}
             className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#78716C] hover:text-[#D4AF37] transition-colors"
@@ -60,6 +81,9 @@ function AssetCardShell({ asset }: { asset: any }) {
             Generează formate
           </Link>
         )}
+        <div className="mt-2">
+          <AssetDeleteButton assetId={asset.id} />
+        </div>
       </div>
     </div>
   )
@@ -68,13 +92,13 @@ function AssetCardShell({ asset }: { asset: any }) {
 export default async function VideoLibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ product?: string; ad?: string; unassigned?: string }>
+  searchParams: Promise<{ product?: string; ad?: string; unassigned?: string; type?: string }>
 }) {
   const session = await requireAuth()
   const orgId = await getCurrentOrgId(session)
   if (!orgId) notFound()
 
-  const { product: productFilter, ad: adFilter, unassigned } = await searchParams
+  const { product: productFilter, ad: adFilter, unassigned, type: typeFilter } = await searchParams
 
   // Sidebar data: all products with their ads and asset counts
   const products = await db.product.findMany({
@@ -98,16 +122,16 @@ export default async function VideoLibraryPage({
 
   // Unassigned count
   const unassignedCount = await db.videoAsset.count({
-    where: { organizationId: orgId, adId: null },
+    where: { organizationId: orgId, adId: null, assetType: { not: 'RENDERED' } },
   })
 
   // Total count
   const totalCount = await db.videoAsset.count({
-    where: { organizationId: orgId },
+    where: { organizationId: orgId, assetType: { not: 'RENDERED' } },
   })
 
   // Assets for main content area
-  const assetWhere: any = { organizationId: orgId }
+  const assetWhere: any = { organizationId: orgId, assetType: { not: 'RENDERED' } }
   if (adFilter) {
     assetWhere.adId = adFilter
   } else if (productFilter) {
@@ -121,9 +145,22 @@ export default async function VideoLibraryPage({
     orderBy: { createdAt: 'desc' },
   })
 
-  const videos = assets.filter((a) => a.assetType === 'VIDEO')
-  const images = assets.filter((a) => a.assetType === 'IMAGE')
-  const audios = assets.filter((a) => a.assetType === 'AUDIO')
+  // Fetch presigned URLs for video and image assets in parallel
+  const assetsWithUrls = await Promise.all(
+    assets.map(async (a) => {
+      if (a.assetType !== 'VIDEO' && a.assetType !== 'IMAGE') return { ...a, previewUrl: null }
+      try {
+        const previewUrl = await getPresignedDownloadUrl(a.r2Key)
+        return { ...a, previewUrl }
+      } catch {
+        return { ...a, previewUrl: null }
+      }
+    })
+  )
+
+  const videos = assetsWithUrls.filter((a) => a.assetType === 'VIDEO')
+  const images = assetsWithUrls.filter((a) => a.assetType === 'IMAGE')
+  const audios = assetsWithUrls.filter((a) => a.assetType === 'AUDIO')
 
   // Heading for content area
   let heading = 'Toate fișierele'
@@ -175,35 +212,47 @@ export default async function VideoLibraryPage({
           {/* Tabs */}
           <div className="flex items-center gap-6 border-b border-[#E7E5E4]">
             {[
-              { label: 'Toate', count: assets.length, active: true },
-              { label: 'Clipuri video', count: videos.length },
-              { label: 'Imagini', count: images.length },
-              { label: 'Audio', count: audios.length },
-            ].map((tab) => (
-              <button
-                key={tab.label}
-                className={`pb-3 text-sm flex items-center gap-1.5 border-b-2 -mb-px transition-colors ${
-                  tab.active
-                    ? 'font-semibold text-[#1C1917] border-[#D4AF37]'
-                    : 'text-[#78716C] border-transparent hover:text-[#1C1917]'
-                }`}
-              >
-                {tab.label}
-                {tab.count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                    tab.active ? 'bg-[#D4AF37] text-[#1C1917]' : 'bg-[#F5F5F4] text-[#78716C]'
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
+              { label: 'Toate', typeParam: undefined, count: assets.length },
+              { label: 'Clipuri video', typeParam: 'video', count: videos.length },
+              { label: 'Imagini', typeParam: 'image', count: images.length },
+              { label: 'Audio', typeParam: 'audio', count: audios.length },
+            ].map((tab) => {
+              const isActive = (tab.typeParam ?? '') === (typeFilter ?? '')
+              const parts: string[] = []
+              if (productFilter) parts.push(`product=${productFilter}`)
+              if (adFilter) parts.push(`ad=${adFilter}`)
+              if (unassigned) parts.push('unassigned=1')
+              if (tab.typeParam) parts.push(`type=${tab.typeParam}`)
+              const href = `/videos/library${parts.length ? `?${parts.join('&')}` : ''}`
+              return (
+                <Link
+                  key={tab.label}
+                  href={href}
+                  className={`pb-3 text-sm flex items-center gap-1.5 border-b-2 -mb-px transition-colors ${
+                    isActive
+                      ? 'font-semibold text-[#1C1917] border-[#D4AF37]'
+                      : 'text-[#78716C] border-transparent hover:text-[#1C1917]'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                      isActive ? 'bg-[#D4AF37] text-[#1C1917]' : 'bg-[#F5F5F4] text-[#78716C]'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
           </div>
 
           {/* Asset grid or empty state */}
-          {assets.length > 0 ? (
+          {(() => {
+            const displayed = typeFilter === 'video' ? videos : typeFilter === 'image' ? images : typeFilter === 'audio' ? audios : assetsWithUrls
+            return displayed.length > 0 ? (
             <div className="grid grid-cols-3 gap-4">
-              {assets.map((asset) => (
+              {displayed.map((asset) => (
                 <AssetCardShell key={asset.id} asset={asset} />
               ))}
             </div>
@@ -217,7 +266,8 @@ export default async function VideoLibraryPage({
                 Încarcă primul fișier folosind butonul din dreapta sus.
               </p>
             </div>
-          )}
+          )
+          })()}
         </div>
       </div>
     </div>

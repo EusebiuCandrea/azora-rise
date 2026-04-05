@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Player } from '@remotion/player'
-import { FormatVideo as FormatVideoComponent, FormatVideoProps, OutputFormat } from '@/src/remotion/FormatVideo'
-import { Copy, Check, Download, Loader2, ChevronDown, ChevronUp, CheckCircle2, Circle, XCircle } from 'lucide-react'
+import { Download, Loader2, CheckCircle2, Circle, XCircle } from 'lucide-react'
+
+type OutputFormat = '9x16' | '4x5' | '1x1' | '16x9'
+type RenderState = 'idle' | 'rendering' | 'done' | 'error'
 
 interface FormatConfig {
   id: OutputFormat
@@ -22,24 +23,20 @@ const FORMATS: FormatConfig[] = [
   { id: '16x9',  label: '16:9',  sublabel: 'Landscape',        width: 1920, height: 1080, previewW: 64, previewH: 36 },
 ]
 
-type RenderState = 'idle' | 'rendering' | 'done' | 'error'
-
-interface FormatPreviewTabsProps {
-  videoUrl: string
-  durationInFrames: number
+interface ImageFormatPreviewTabsProps {
+  imageUrl: string
   filename: string
   assetId: string
   existingRenders?: Record<string, string>
 }
 
-export function FormatPreviewTabs({
-  videoUrl,
-  durationInFrames,
+export function ImageFormatPreviewTabs({
+  imageUrl,
   filename,
   assetId,
   existingRenders = {},
-}: FormatPreviewTabsProps) {
-  const [activePreview, setActivePreview] = useState<OutputFormat>('9x16')
+}: ImageFormatPreviewTabsProps) {
+  const [activePreview, setActivePreview] = useState<OutputFormat>('4x5')
   const [selected, setSelected] = useState<Set<OutputFormat>>(
     new Set(['9x16', '4x5', '1x1', '16x9'])
   )
@@ -58,17 +55,12 @@ export function FormatPreviewTabs({
   const [errors, setErrors] = useState<Record<OutputFormat, string>>({
     '9x16': '', '4x5': '', '1x1': '', '16x9': '',
   })
-  const [showCli, setShowCli] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [copiedAll, setCopiedAll] = useState(false)
 
   const activeFormat = FORMATS.find((f) => f.id === activePreview)!
   const baseName = filename.replace(/\.[^.]+$/, '')
 
-  const playerHeight = 400
-  const playerWidth = Math.round(playerHeight * (activeFormat.width / activeFormat.height))
-
-  const inputProps: FormatVideoProps = { videoUrl, outputFormat: activePreview, durationInFrames }
+  const previewHeight = 360
+  const previewWidth = Math.round(previewHeight * (activeFormat.width / activeFormat.height))
 
   function toggleFormat(id: OutputFormat) {
     setSelected((prev) => {
@@ -83,13 +75,13 @@ export function FormatPreviewTabs({
     setRenderStates((s) => ({ ...s, [fmt]: 'rendering' }))
     setErrors((e) => ({ ...e, [fmt]: '' }))
     try {
-      const res = await fetch(`/api/render/${assetId}`, {
+      const res = await fetch(`/api/render-image/${assetId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ outputFormat: fmt }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Eroare la render')
+      if (!res.ok) throw new Error(data.error ?? 'Eroare')
       setDownloadUrls((d) => ({ ...d, [fmt]: data.downloadUrl }))
       setRenderStates((s) => ({ ...s, [fmt]: 'done' }))
     } catch (err) {
@@ -102,33 +94,7 @@ export function FormatPreviewTabs({
     const toRender = FORMATS.filter(
       (f) => selected.has(f.id) && renderStates[f.id] !== 'done'
     )
-    // Sequential for video (heavy FFmpeg) to avoid Railway OOM
-    for (const f of toRender) {
-      await renderFormat(f.id)
-    }
-  }
-
-  const cliCommand =
-    `npx remotion render src/remotion/index.tsx FormatVideo-${activePreview} ` +
-    `out/${baseName}-${activePreview}.mp4 ` +
-    `--props '${JSON.stringify(inputProps)}'`
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(cliCommand)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  async function handleCopyAll() {
-    const commands = FORMATS.filter((f) => selected.has(f.id))
-      .map((f) => {
-        const props: FormatVideoProps = { videoUrl, outputFormat: f.id, durationInFrames }
-        return `npx remotion render src/remotion/index.tsx FormatVideo-${f.id} out/${baseName}-${f.id}.mp4 --props '${JSON.stringify(props)}'`
-      })
-      .join('\n')
-    await navigator.clipboard.writeText(commands)
-    setCopiedAll(true)
-    setTimeout(() => setCopiedAll(false), 2000)
+    await Promise.all(toRender.map((f) => renderFormat(f.id)))
   }
 
   const selectedFormats = FORMATS.filter((f) => selected.has(f.id))
@@ -166,27 +132,43 @@ export function FormatPreviewTabs({
         </div>
 
         <div className="flex justify-center">
+          {/* Blur background + sharp centered image — mirrors Sharp output */}
           <div
-            className="rounded-xl overflow-hidden border border-[#E7E5E4] shadow-sm bg-black"
-            style={{ width: playerWidth, height: playerHeight }}
+            className="rounded-xl overflow-hidden border border-[#E7E5E4] shadow-sm relative"
+            style={{ width: previewWidth, height: previewHeight }}
           >
-            <Player
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              component={FormatVideoComponent as any}
-              inputProps={inputProps}
-              durationInFrames={durationInFrames}
-              compositionWidth={activeFormat.width}
-              compositionHeight={activeFormat.height}
-              fps={30}
-              style={{ width: playerWidth, height: playerHeight }}
-              controls
-              loop
+            {/* Blurred, darkened background */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt=""
+              style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: '100%',
+                objectFit: 'cover',
+                filter: 'blur(12px) brightness(0.65)',
+                transform: 'scale(1.05)',
+              }}
+            />
+            {/* Sharp centered image */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={filename}
+              style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: '100%',
+                objectFit: 'contain',
+              }}
             />
           </div>
         </div>
+        <p className="text-center text-[11px] text-[#78716C]">
+          Previzualizare · fundal blur + imagine centrată la {activeFormat.width}×{activeFormat.height}px
+        </p>
       </div>
 
-      {/* Format selection cards */}
+      {/* Format selection */}
       <div className="space-y-3">
         <p className="text-sm font-semibold text-[#1C1917]">Selectează formatele</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -227,15 +209,16 @@ export function FormatPreviewTabs({
                   )}
                 </div>
 
-                {/* Aspect ratio thumbnail */}
+                {/* Aspect ratio preview box — blur bg + sharp centered */}
                 <div className="flex justify-center mb-2">
                   <div
-                    className="rounded bg-black flex items-center justify-center"
+                    className="rounded overflow-hidden relative"
                     style={{ width: f.previewW, height: f.previewH }}
                   >
-                    <svg viewBox="0 0 10 10" style={{ width: f.previewW * 0.5, height: f.previewH * 0.5, opacity: 0.4 }}>
-                      <polygon points="2,1 8,5 2,9" fill="white" />
-                    </svg>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(4px) brightness(0.65)', transform: 'scale(1.05)' }} />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
                 </div>
 
@@ -247,7 +230,7 @@ export function FormatPreviewTabs({
                   <div className="mt-2 flex gap-1">
                     <a
                       href={url}
-                      download={`${baseName}-${f.id}.mp4`}
+                      download={`${baseName}-${f.id}.jpg`}
                       onClick={(e) => e.stopPropagation()}
                       className="flex-1 flex items-center justify-center gap-1 h-6 bg-green-600 hover:bg-green-700 text-white text-[10px] font-semibold rounded-lg transition-colors"
                     >
@@ -263,7 +246,9 @@ export function FormatPreviewTabs({
                     </button>
                   </div>
                 )}
-                {err && <p className="text-[9px] text-red-500 mt-1 truncate">{err}</p>}
+                {err && (
+                  <p className="text-[9px] text-red-500 mt-1 truncate">{err}</p>
+                )}
               </div>
             )
           })}
@@ -283,9 +268,9 @@ export function FormatPreviewTabs({
             }`}
           >
             {renderingAny ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Randează...</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> Procesează...</>
             ) : (
-              <>Renderează {selectedFormats.filter((f) => renderStates[f.id] !== 'done').length} format{selectedFormats.filter((f) => renderStates[f.id] !== 'done').length !== 1 ? 'e' : ''}</>
+              <>Generează {selectedFormats.filter((f) => renderStates[f.id] !== 'done').length} format{selectedFormats.filter((f) => renderStates[f.id] !== 'done').length !== 1 ? 'e' : ''}</>
             )}
           </button>
         )}
@@ -296,7 +281,7 @@ export function FormatPreviewTabs({
               <a
                 key={f.id}
                 href={downloadUrls[f.id]}
-                download={`${baseName}-${f.id}.mp4`}
+                download={`${baseName}-${f.id}.jpg`}
                 className="flex items-center gap-1.5 px-3 h-10 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 <Download className="w-4 h-4" />
@@ -307,46 +292,15 @@ export function FormatPreviewTabs({
         )}
 
         {allSelectedDone && (
-          <p className="text-[11px] text-green-700 font-medium">✓ Toate formatele selectate sunt gata</p>
+          <p className="text-[11px] text-green-700 font-medium">
+            ✓ Toate formatele selectate sunt gata
+          </p>
         )}
       </div>
 
       {!allSelectedDone && (
-        <p className="text-[11px] text-[#78716C]">Randarea durează 30–90s per format · se procesează secvențial · fișierele sunt disponibile 1h</p>
+        <p className="text-[11px] text-[#78716C]">Procesarea durează ~2s per format · fișierele sunt disponibile 1h</p>
       )}
-
-      {/* CLI section — collapsed */}
-      <div className="border border-[#E7E5E4] rounded-xl overflow-hidden">
-        <button
-          onClick={() => setShowCli((v) => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-[#78716C] hover:bg-[#FAFAF9] transition-colors"
-        >
-          <span>Comenzi CLI (dezvoltator)</span>
-          {showCli ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-        </button>
-        {showCli && (
-          <div className="px-4 pb-4 space-y-3 border-t border-[#E7E5E4]">
-            <p className="text-[11px] text-[#78716C] pt-3">Comandă pentru formatul activ ({activePreview}):</p>
-            <div className="flex items-start gap-2">
-              <code className="flex-1 block bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg px-3 py-2 text-[10px] text-[#1C1917] font-mono break-all">
-                {cliCommand}
-              </code>
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-1 px-2.5 h-8 bg-[#1C1917] text-white text-[10px] font-semibold rounded-lg transition-colors flex-shrink-0 mt-0.5"
-              >
-                {copied ? <><Check className="w-3 h-3" /> Copiat</> : <><Copy className="w-3 h-3" /> Copiază</>}
-              </button>
-            </div>
-            <button onClick={handleCopyAll}
-              className="flex items-center gap-1.5 px-3 h-8 bg-[#1C1917] text-white text-[10px] font-semibold rounded-lg transition-colors">
-              {copiedAll
-                ? <><Check className="w-3 h-3" /> Copiat</>
-                : <><Copy className="w-3 h-3" /> Copiază {selected.size} formate</>}
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

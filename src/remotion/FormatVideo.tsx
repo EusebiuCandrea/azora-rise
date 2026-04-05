@@ -43,20 +43,22 @@ export const FormatVideo: React.FC<FormatVideoProps> = ({ videoUrl, outputFormat
       </AbsoluteFill>
 
       {/* Sharp centered column */}
-      <AbsoluteFill
+      <div
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'stretch',
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: portraitWidth,
+          overflow: 'hidden',
         }}
       >
-        <div style={{ width: portraitWidth, height: '100%', overflow: 'hidden' }}>
-          <Video
-            src={videoUrl}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        </div>
-      </AbsoluteFill>
+        <Video
+          src={videoUrl}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      </div>
     </AbsoluteFill>
   )
 }

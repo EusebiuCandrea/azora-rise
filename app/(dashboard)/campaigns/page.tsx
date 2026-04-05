@@ -6,6 +6,9 @@ import { CampaignsTable } from '@/features/meta/components/CampaignsTable'
 import { CampaignsSummaryBar } from '@/features/meta/components/CampaignsSummaryBar'
 import { MetaAlertBanner } from '@/features/meta/components/MetaAlertBanner'
 import { SyncButton } from '@/features/meta/components/SyncButton'
+import { DailyDigestBanner } from '@/features/meta/components/DailyDigestBanner'
+import { KPIBenchmarksPanel } from '@/features/meta/components/KPIBenchmarksPanel'
+import { CampaignReportType } from '@prisma/client'
 
 export default async function CampaignsPage() {
   const session = await requireAuth()
@@ -15,25 +18,38 @@ export default async function CampaignsPage() {
     ? !!(await db.metaConnection.findUnique({ where: { organizationId: orgId }, select: { id: true } }))
     : false
 
-  const rawCampaigns = orgId
-    ? await db.campaign.findMany({
-        where: { organizationId: orgId },
-        include: {
-          metrics: { orderBy: { date: 'desc' }, take: 30 },
-          _count: { select: { adSets: true } },
-        },
-        orderBy: { updatedAt: 'desc' },
-      })
-    : []
+  const [rawCampaigns, latestDigest] = orgId
+    ? await Promise.all([
+        db.campaign.findMany({
+          where: { organizationId: orgId },
+          include: {
+            metrics: { orderBy: { date: 'desc' }, take: 30 },
+            aiReports: {
+              where: { reportType: CampaignReportType.CAMPAIGN_DEEP },
+              orderBy: { generatedAt: 'desc' },
+              take: 1,
+              select: { healthScore: true },
+            },
+            _count: { select: { adSets: true } },
+          },
+          orderBy: { updatedAt: 'desc' },
+        }),
+        db.campaignAIReport.findFirst({
+          where: { organizationId: orgId, reportType: CampaignReportType.DAILY_DIGEST },
+          orderBy: { generatedAt: 'desc' },
+          select: { summary: true, generatedAt: true },
+        }),
+      ])
+    : [[], null]
 
-  const campaigns = rawCampaigns.map((campaign) => {
+  const STATUS_ORDER: Record<string, number> = { ACTIVE: 0, PAUSED: 1, DRAFT: 2, COMPLETED: 3 }
+  const campaigns = rawCampaigns
+    .sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9))
+    .map((campaign) => {
     const totalSpend = campaign.metrics.reduce((sum, m) => sum + m.spend, 0)
     const totalPurchases = campaign.metrics.reduce((sum, m) => sum + m.purchases, 0)
-    const metricsWithRoas = campaign.metrics.filter((m) => m.roas !== null)
-    const avgRoas =
-      metricsWithRoas.length > 0
-        ? metricsWithRoas.reduce((sum, m) => sum + (m.roas ?? 0), 0) / metricsWithRoas.length
-        : null
+    const totalPurchaseValue = campaign.metrics.reduce((sum, m) => sum + (m.purchaseValue ?? 0), 0)
+    const avgRoas = totalSpend > 0 && totalPurchaseValue > 0 ? totalPurchaseValue / totalSpend : null
 
     return {
       id: campaign.id,
@@ -42,6 +58,7 @@ export default async function CampaignsPage() {
       budget: campaign.budget,
       objective: campaign.objective,
       metaCampaignId: campaign.metaCampaignId,
+      healthScore: campaign.aiReports[0]?.healthScore ?? null,
       summary: {
         totalSpend,
         totalPurchases,
@@ -85,6 +102,16 @@ export default async function CampaignsPage() {
       )}
 
       <MetaAlertBanner />
+
+      {latestDigest && (
+        <DailyDigestBanner
+          summary={latestDigest.summary}
+          generatedAt={latestDigest.generatedAt}
+          campaignCount={campaigns.length}
+        />
+      )}
+
+      <KPIBenchmarksPanel />
 
       <div className="bg-white border border-[#E7E5E4] rounded-xl overflow-hidden shadow-sm">
         <CampaignsTable campaigns={campaigns} />

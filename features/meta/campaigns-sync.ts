@@ -8,6 +8,8 @@ import {
   parseMetaBudget,
   parsePurchases,
   parsePurchaseValue,
+  parseActionCount,
+  parseVideoMetric,
 } from "./client"
 
 // ─── Sync complet: campanii + ad sets + ads ───────────────────────────────────
@@ -169,6 +171,42 @@ export async function syncDailyMetrics(
     const ctr = parseFloat(insight.ctr || "0")
     const roas = spend > 0 ? purchaseValue / spend : null
 
+    const reach = insight.reach ? parseInt(insight.reach, 10) : null
+    const frequency = insight.frequency ? parseFloat(insight.frequency) : null
+    const landingPageViews = parseActionCount(insight, "landing_page_view")
+    const addToCart = parseActionCount(insight, "add_to_cart")
+    const initiateCheckout = parseActionCount(insight, "initiate_checkout")
+    const videoPlays = parseVideoMetric(insight.video_play_actions)
+    const videoP25 = parseVideoMetric(insight.video_p25_watched_actions)
+    const videoP50 = parseVideoMetric(insight.video_p50_watched_actions)
+    const videoP75 = parseVideoMetric(insight.video_p75_watched_actions)
+    const videoP95 = parseVideoMetric(insight.video_p95_watched_actions)
+    const videoThruPlays = parseVideoMetric(insight.video_thruplay_watched_actions)
+    const videoAvgWatchTimeSec = parseVideoMetric(insight.video_avg_time_watched_actions)
+
+    const metricsData = {
+      spend,
+      impressions,
+      clicks,
+      purchases,
+      roas,
+      cpm,
+      ctr,
+      reach,
+      frequency,
+      purchaseValue,
+      landingPageViews,
+      addToCart,
+      initiateCheckout,
+      videoPlays: videoPlays !== null ? Math.round(videoPlays) : null,
+      videoP25: videoP25 !== null ? Math.round(videoP25) : null,
+      videoP50: videoP50 !== null ? Math.round(videoP50) : null,
+      videoP75: videoP75 !== null ? Math.round(videoP75) : null,
+      videoP95: videoP95 !== null ? Math.round(videoP95) : null,
+      videoThruPlays: videoThruPlays !== null ? Math.round(videoThruPlays) : null,
+      videoAvgWatchTimeSec,
+    }
+
     await db.campaignMetrics.upsert({
       where: {
         campaignId_date: {
@@ -176,18 +214,179 @@ export async function syncDailyMetrics(
           date: new Date(insightDate),
         },
       },
-      create: {
-        campaignId: campaign.id,
-        date: new Date(insightDate),
-        spend,
-        impressions,
-        clicks,
-        purchases,
-        roas,
-        cpm,
-        ctr,
-      },
-      update: { spend, impressions, clicks, purchases, roas, cpm, ctr },
+      create: { campaignId: campaign.id, date: new Date(insightDate), ...metricsData },
+      update: metricsData,
+    })
+
+    metricsUpserted++
+  }
+
+  return { metricsUpserted }
+}
+
+// ─── Sync metrici ad-set level ────────────────────────────────────────────────
+
+export async function syncAdSetMetrics(
+  organizationId: string,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<{ metricsUpserted: number; error?: string }> {
+  const resolvedFrom = dateFrom ?? getYesterday()
+  const resolvedTo = dateTo ?? resolvedFrom
+
+  const connection = await db.metaConnection.findUnique({
+    where: { organizationId },
+  })
+  if (!connection) throw new Error("No Meta connection")
+
+  const accessToken = decrypt(connection.accessTokenEncrypted)
+
+  const insights = await fetchCampaignInsights(
+    accessToken,
+    connection.adAccountId,
+    resolvedFrom,
+    resolvedTo,
+    "adset"
+  )
+
+  let metricsUpserted = 0
+
+  for (const insight of insights) {
+    if (!insight.adset_id) continue
+
+    const adSet = await db.adSet.findFirst({
+      where: { organizationId, metaAdSetId: insight.adset_id },
+    })
+    if (!adSet) continue
+
+    const insightDate = insight.date_start
+    const spend = parseFloat(insight.spend || "0")
+    const purchases = parsePurchases(insight)
+    const purchaseValue = parsePurchaseValue(insight)
+    const impressions = parseInt(insight.impressions || "0", 10)
+    const clicks = parseInt(insight.clicks || "0", 10)
+    const cpm = parseFloat(insight.cpm || "0")
+    const ctr = parseFloat(insight.ctr || "0")
+    const roas = spend > 0 ? purchaseValue / spend : null
+
+    const reach = insight.reach ? parseInt(insight.reach, 10) : null
+    const frequency = insight.frequency ? parseFloat(insight.frequency) : null
+    const landingPageViews = parseActionCount(insight, "landing_page_view")
+    const addToCart = parseActionCount(insight, "add_to_cart")
+    const initiateCheckout = parseActionCount(insight, "initiate_checkout")
+    const videoPlays = parseVideoMetric(insight.video_play_actions)
+    const videoP25 = parseVideoMetric(insight.video_p25_watched_actions)
+    const videoP50 = parseVideoMetric(insight.video_p50_watched_actions)
+    const videoP75 = parseVideoMetric(insight.video_p75_watched_actions)
+    const videoP95 = parseVideoMetric(insight.video_p95_watched_actions)
+    const videoThruPlays = parseVideoMetric(insight.video_thruplay_watched_actions)
+    const videoAvgWatchTimeSec = parseVideoMetric(insight.video_avg_time_watched_actions)
+
+    const metricsData = {
+      spend,
+      impressions,
+      clicks,
+      purchases,
+      roas,
+      cpm,
+      ctr,
+      reach,
+      frequency,
+      purchaseValue,
+      landingPageViews,
+      addToCart,
+      initiateCheckout,
+      videoPlays: videoPlays !== null ? Math.round(videoPlays) : null,
+      videoP25: videoP25 !== null ? Math.round(videoP25) : null,
+      videoP50: videoP50 !== null ? Math.round(videoP50) : null,
+      videoP75: videoP75 !== null ? Math.round(videoP75) : null,
+      videoP95: videoP95 !== null ? Math.round(videoP95) : null,
+      videoThruPlays: videoThruPlays !== null ? Math.round(videoThruPlays) : null,
+      videoAvgWatchTimeSec,
+    }
+
+    await db.adSetMetrics.upsert({
+      where: { adSetId_date: { adSetId: adSet.id, date: new Date(insightDate) } },
+      create: { adSetId: adSet.id, date: new Date(insightDate), ...metricsData },
+      update: metricsData,
+    })
+
+    metricsUpserted++
+  }
+
+  return { metricsUpserted }
+}
+
+// ─── Sync metrici ad level ────────────────────────────────────────────────────
+
+export async function syncAdMetrics(
+  organizationId: string,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<{ metricsUpserted: number; error?: string }> {
+  const resolvedFrom = dateFrom ?? getYesterday()
+  const resolvedTo = dateTo ?? resolvedFrom
+
+  const connection = await db.metaConnection.findUnique({ where: { organizationId } })
+  if (!connection) throw new Error("No Meta connection")
+
+  const accessToken = decrypt(connection.accessTokenEncrypted)
+
+  const insights = await fetchCampaignInsights(
+    accessToken,
+    connection.adAccountId,
+    resolvedFrom,
+    resolvedTo,
+    "ad"
+  )
+
+  let metricsUpserted = 0
+
+  for (const insight of insights) {
+    if (!insight.ad_id) continue
+
+    const ad = await db.ad.findFirst({ where: { organizationId, metaAdId: insight.ad_id } })
+    if (!ad) continue
+
+    const insightDate = insight.date_start
+    const spend = parseFloat(insight.spend || "0")
+    const purchases = parsePurchases(insight)
+    const purchaseValue = parsePurchaseValue(insight)
+    const impressions = parseInt(insight.impressions || "0", 10)
+    const clicks = parseInt(insight.clicks || "0", 10)
+    const cpm = parseFloat(insight.cpm || "0")
+    const ctr = parseFloat(insight.ctr || "0")
+    const roas = spend > 0 ? purchaseValue / spend : null
+
+    const reach = insight.reach ? parseInt(insight.reach, 10) : null
+    const frequency = insight.frequency ? parseFloat(insight.frequency) : null
+    const landingPageViews = parseActionCount(insight, "landing_page_view")
+    const addToCart = parseActionCount(insight, "add_to_cart")
+    const initiateCheckout = parseActionCount(insight, "initiate_checkout")
+    const videoPlays = parseVideoMetric(insight.video_play_actions)
+    const videoP25 = parseVideoMetric(insight.video_p25_watched_actions)
+    const videoP50 = parseVideoMetric(insight.video_p50_watched_actions)
+    const videoP75 = parseVideoMetric(insight.video_p75_watched_actions)
+    const videoP95 = parseVideoMetric(insight.video_p95_watched_actions)
+    const videoThruPlays = parseVideoMetric(insight.video_thruplay_watched_actions)
+    const videoAvgWatchTimeSec = parseVideoMetric(insight.video_avg_time_watched_actions)
+
+    const metricsData = {
+      spend, impressions, clicks, purchases, roas, cpm, ctr,
+      reach, frequency, purchaseValue, landingPageViews, addToCart, initiateCheckout,
+      videoPlays: videoPlays !== null ? Math.round(videoPlays) : null,
+      videoP25: videoP25 !== null ? Math.round(videoP25) : null,
+      videoP50: videoP50 !== null ? Math.round(videoP50) : null,
+      videoP75: videoP75 !== null ? Math.round(videoP75) : null,
+      videoP95: videoP95 !== null ? Math.round(videoP95) : null,
+      videoThruPlays: videoThruPlays !== null ? Math.round(videoThruPlays) : null,
+      videoAvgWatchTimeSec,
+    }
+
+    await db.adMetrics.upsert({
+      where: { adId_date: { adId: ad.id, date: new Date(insightDate) } },
+      create: { adId: ad.id, date: new Date(insightDate), ...metricsData },
+      update: metricsData,
     })
 
     metricsUpserted++

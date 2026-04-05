@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { FormatPreviewTabs } from '@/features/videos/components/FormatPreviewTabs'
+import { ImageFormatPreviewTabs } from '@/features/videos/components/ImageFormatPreviewTabs'
 
 const FPS = 30
 const DEFAULT_DURATION_SECONDS = 30
@@ -21,11 +22,12 @@ export default async function FormatGeneratorPage({
   if (!orgId) notFound()
 
   const asset = await db.videoAsset.findFirst({
-    where: { id: assetId, organizationId: orgId, assetType: 'VIDEO' },
+    where: { id: assetId, organizationId: orgId, assetType: { in: ['VIDEO', 'IMAGE'] } },
     select: {
       id: true,
       filename: true,
       r2Key: true,
+      assetType: true,
       durationSeconds: true,
       ad: {
         select: {
@@ -37,8 +39,22 @@ export default async function FormatGeneratorPage({
   })
   if (!asset) notFound()
 
-  const videoUrl = await getPresignedDownloadUrl(asset.r2Key)
-  const durationInFrames = Math.round((asset.durationSeconds ?? DEFAULT_DURATION_SECONDS) * FPS)
+  const [assetUrl, renderedAssets] = await Promise.all([
+    getPresignedDownloadUrl(asset.r2Key),
+    db.videoAsset.findMany({
+      where: { parentAssetId: assetId, assetType: 'RENDERED', organizationId: orgId },
+      select: { outputFormat: true, r2Key: true },
+    }),
+  ])
+
+  const existingRenders: Record<string, string> = {}
+  await Promise.all(
+    renderedAssets.map(async (r) => {
+      if (r.outputFormat) {
+        existingRenders[r.outputFormat] = await getPresignedDownloadUrl(r.r2Key)
+      }
+    })
+  )
 
   const breadcrumb = asset.ad
     ? `${asset.ad.product.title} / ${asset.ad.name}`
@@ -63,12 +79,22 @@ export default async function FormatGeneratorPage({
         </p>
       </div>
 
-      <FormatPreviewTabs
-        videoUrl={videoUrl}
-        durationInFrames={durationInFrames}
-        filename={asset.filename}
-        assetR2Key={asset.r2Key}
-      />
+      {asset.assetType === 'IMAGE' ? (
+        <ImageFormatPreviewTabs
+          imageUrl={assetUrl}
+          filename={asset.filename}
+          assetId={asset.id}
+          existingRenders={existingRenders}
+        />
+      ) : (
+        <FormatPreviewTabs
+          videoUrl={assetUrl}
+          durationInFrames={Math.round((asset.durationSeconds ?? DEFAULT_DURATION_SECONDS) * FPS)}
+          filename={asset.filename}
+          assetId={asset.id}
+          existingRenders={existingRenders}
+        />
+      )}
     </div>
   )
 }

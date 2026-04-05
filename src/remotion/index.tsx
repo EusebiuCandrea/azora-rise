@@ -1,4 +1,4 @@
-import { Composition } from 'remotion'
+import { Composition, registerRoot } from 'remotion'
 import { FormatVideo as FormatVideoComp, FormatVideoProps } from './FormatVideo'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,3 +51,5 @@ export const RemotionRoot: React.FC = () => (
     />
   </>
 )
+
+registerRoot(RemotionRoot)

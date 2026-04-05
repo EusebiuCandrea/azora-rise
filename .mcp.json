@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "meta-ads": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "meta-ads-mcp"
+      ],
+      "env": {
+        "META_ACCESS_TOKEN": "EAAWOUUn3nNIBRPR0kVN58TmRvyKs4MbczWgK4esfu9vDh9tZCUPmqQEnIqGVVzt54HSJRllWXbGSZA58XFW5U5OmrkRlDN3jj2c3NBcXvoOvcK0WWmLPZCVYGIoo0PuyABVz6ynV4NgKIsP2MHsbFZBRDPkyX8GAtdpOGIjTgb1ezZA4gNfqZAggTI0VeeDpTwxEGpjaDdEW7pBaIuNl6I1K12plujt2iLOAe7VjQ4ETL9Otl9W6CL",
+        "META_AD_ACCOUNT_ID": "act_110008972445119",
+        "META_APP_ID": "1563854668012754",
+        "META_APP_SECRET": "7949e0aef032d5f4258b3811707e4802",
+        "META_AUTO_REFRESH": "true"
+      }
+    }
+  }
+}

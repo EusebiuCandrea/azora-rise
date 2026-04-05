@@ -11,6 +11,7 @@ RUN npm run build
 FROM node:20-bullseye-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 RUN npm install -g prisma@6.19.2

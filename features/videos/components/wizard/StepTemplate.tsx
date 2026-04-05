@@ -2,7 +2,8 @@
 
 import { WizardState, WizardTemplate } from '../VideoWizard'
 import { cn } from '@/lib/utils'
-import { Film, SplitSquareHorizontal, Images, Bot } from 'lucide-react'
+import { Film, SplitSquareHorizontal, Images, Bot, LayoutTemplate } from 'lucide-react'
+import Link from 'next/link'
 
 const TEMPLATES: Array<{ id: WizardTemplate; label: string; description: string; icon: React.ElementType; recommended?: boolean }> = [
   {
@@ -89,6 +90,23 @@ export function StepTemplate({ state, update }: Props) {
             </button>
           )
         })}
+
+        {/* Redimensionare formate — link direct la bibliotecă */}
+        <Link
+          href="/videos/library"
+          className="flex flex-col items-center gap-4 rounded-xl border border-[#E7E5E4] bg-white hover:border-[#D4AF37]/40 hover:bg-[#FAFAF9] shadow-sm p-6 text-center transition-all"
+        >
+          <div className="w-full aspect-video rounded-lg border border-[#E7E5E4] bg-[#FAFAF9] flex items-center justify-center">
+            <LayoutTemplate className="w-8 h-8 text-[#C4C0BA]" strokeWidth={1} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-[#1C1917]">Redimensionare formate</p>
+            <p className="text-xs text-[#78716C] leading-snug">Generează 9:16, 4:5, 1:1, 16:9 dintr-un video existent din bibliotecă.</p>
+          </div>
+          <div className="w-full h-9 rounded-lg text-sm font-medium border border-[#E7E5E4] bg-white text-[#1C1917] hover:bg-[#F5F5F4] transition-colors flex items-center justify-center">
+            Mergi la bibliotecă
+          </div>
+        </Link>
 
         {/* Hook Generator AI placeholder */}
         <div className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-[#E7E5E4] bg-[#FAFAF9] p-6 text-center opacity-60">

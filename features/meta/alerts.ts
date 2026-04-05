@@ -36,6 +36,11 @@ type CampaignWithMetrics = Awaited<
     cpm: number | null
     ctr: number | null
     purchases: number
+    frequency: number | null
+    landingPageViews: number | null
+    addToCart: number | null
+    videoPlays: number | null
+    videoP25: number | null
   }>
 }
 
@@ -49,6 +54,20 @@ export async function checkAlertsForOrganization(
       metrics: {
         orderBy: { date: "desc" },
         take: 7,
+        select: {
+          spend: true,
+          impressions: true,
+          clicks: true,
+          roas: true,
+          cpm: true,
+          ctr: true,
+          purchases: true,
+          frequency: true,
+          landingPageViews: true,
+          addToCart: true,
+          videoPlays: true,
+          videoP25: true,
+        },
       },
     },
   })
@@ -58,6 +77,10 @@ export async function checkAlertsForOrganization(
     await checkSpendAlert(campaign as CampaignWithMetrics, config, organizationId)
     await checkCtrAlert(campaign as CampaignWithMetrics, config, organizationId)
     await checkCpmAlert(campaign as CampaignWithMetrics, config, organizationId)
+    await checkFrequencyAlert(campaign as CampaignWithMetrics, organizationId)
+    await checkLandingPageDropAlert(campaign as CampaignWithMetrics, organizationId)
+    await checkNoAddToCartAlert(campaign as CampaignWithMetrics, organizationId)
+    await checkHookRateAlert(campaign as CampaignWithMetrics, organizationId)
   }
 }
 
@@ -161,6 +184,80 @@ async function checkCpmAlert(
       message: `CPM ridicat (${today.cpm.toFixed(1)} RON) — audiența poate fi prea scumpă sau concurența ridicată`,
     })
   }
+}
+
+async function checkFrequencyAlert(
+  campaign: CampaignWithMetrics,
+  organizationId: string
+) {
+  const recentMetrics = campaign.metrics.slice(0, 3)
+  if (recentMetrics.length < 3) return
+
+  const allHighFrequency = recentMetrics.every(
+    (m) => m.frequency !== null && m.frequency > 3.5
+  )
+  if (!allHighFrequency) return
+
+  const avgFrequency = recentMetrics.reduce((sum, m) => sum + (m.frequency ?? 0), 0) / recentMetrics.length
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.FREQUENCY_HIGH, {
+    frequency: avgFrequency,
+    threshold: 3.5,
+    message: `Audiența obosită — aceeași persoană vede reclama de ${avgFrequency.toFixed(1)}x în ultimele 3 zile`,
+  })
+}
+
+async function checkLandingPageDropAlert(
+  campaign: CampaignWithMetrics,
+  organizationId: string
+) {
+  const today = campaign.metrics[0]
+  if (!today || today.clicks === 0) return
+  if (today.landingPageViews === null) return
+
+  const ratio = today.landingPageViews / today.clicks
+  if (ratio >= 0.5) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.LANDING_PAGE_DROP, {
+    ratio,
+    clicks: today.clicks,
+    landingPageViews: today.landingPageViews,
+    message: `Doar ${Math.round(ratio * 100)}% din click-uri ajung pe site — verifică URL-ul reclamei`,
+  })
+}
+
+async function checkNoAddToCartAlert(
+  campaign: CampaignWithMetrics,
+  organizationId: string
+) {
+  const totalSpend = campaign.metrics.reduce((sum, m) => sum + m.spend, 0)
+  const totalAddToCart = campaign.metrics.reduce((sum, m) => sum + (m.addToCart ?? 0), 0)
+
+  if (totalSpend < 200 || totalAddToCart > 0) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.NO_ADD_TO_CART, {
+    spend: totalSpend,
+    message: `Nicio adăugare în coș după ${totalSpend.toFixed(0)} RON cheltuit — problema e la landing page`,
+  })
+}
+
+async function checkHookRateAlert(
+  campaign: CampaignWithMetrics,
+  organizationId: string
+) {
+  const today = campaign.metrics[0]
+  if (!today || !today.videoPlays || today.videoPlays === 0) return
+  if (today.videoP25 === null) return
+
+  const hookRate = today.videoP25 / today.videoPlays
+  if (hookRate >= 0.25) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.HOOK_RATE_LOW, {
+    hookRate,
+    videoPlays: today.videoPlays,
+    videoP25: today.videoP25,
+    message: `Hook slab — doar ${Math.round(hookRate * 100)}% din vizionatori trec de primele 25%`,
+  })
 }
 
 async function createAlertIfNotExists(

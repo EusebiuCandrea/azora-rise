@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 export const r2 = new S3Client({
@@ -64,15 +64,26 @@ export async function getPresignedUploadUrlForKey(
   )
 }
 
-export async function getPresignedDownloadUrl(key: string): Promise<string> {
+export async function getPresignedDownloadUrl(key: string, forDownload = false): Promise<string> {
+  const filename = key.split('/').pop() ?? 'file'
   return getSignedUrl(
     r2,
     new GetObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,
+      ...(forDownload && {
+        ResponseContentDisposition: `attachment; filename="${encodeURIComponent(filename)}"`,
+      }),
     }),
     { expiresIn: 3600 } // 1 oră
   )
+}
+
+export async function deleteR2Object(key: string): Promise<void> {
+  await r2.send(new DeleteObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME!,
+    Key: key,
+  }))
 }
 
 export function getR2Url(orgId: string, folder: string, filename: string): string {

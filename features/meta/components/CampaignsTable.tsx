@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { CampaignStatusBadge } from "./CampaignStatusBadge"
 import { RoasBadge } from "./RoasBadge"
+import { CampaignHealthBadge } from "./CampaignHealthBadge"
 import { usePauseCampaign } from "@/features/meta/hooks/useCampaigns"
 import { Pause, ExternalLink } from "lucide-react"
 
@@ -14,6 +15,7 @@ interface Campaign {
   budget: number
   objective: string
   metaCampaignId: string | null
+  healthScore?: number | null
   summary?: {
     totalSpend: number
     totalPurchases: number
@@ -120,6 +122,7 @@ export function CampaignsTable({ campaigns }: Props) {
               <th className="text-right py-3 px-4">Cheltuieli</th>
               <th className="text-right py-3 px-4">ROAS</th>
               <th className="text-right py-3 px-4">Achiziții</th>
+              <th className="text-right py-3 px-4">Score AI</th>
               <th className="py-3 px-4"></th>
             </tr>
           </thead>
@@ -153,6 +156,9 @@ export function CampaignsTable({ campaigns }: Props) {
                   </td>
                   <td className="py-3 px-4 text-right text-[#1C1917]">
                     {c.summary?.totalPurchases ?? "—"}
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <CampaignHealthBadge score={c.healthScore ?? null} />
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1 justify-end">

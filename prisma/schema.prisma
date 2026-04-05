@@ -166,12 +166,17 @@ model VideoAsset {
   sizeBytes       Int?
   durationSeconds Float?
   tags            String[]
-  adId  String?
-  ad    VideoAd? @relation(fields: [adId], references: [id], onDelete: SetNull)
+  adId            String?
+  ad              VideoAd?     @relation(fields: [adId], references: [id], onDelete: SetNull)
+  parentAssetId   String?
+  parent          VideoAsset?  @relation("RenderedVersions", fields: [parentAssetId], references: [id], onDelete: Cascade)
+  renderedVersions VideoAsset[] @relation("RenderedVersions")
+  outputFormat    String?      // '9x16' | '4x5' | '1x1' | '16x9' — pentru RENDERED assets
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+  @@unique([parentAssetId, outputFormat])
   @@index([organizationId])
   @@index([organizationId, adId])
 }
@@ -402,7 +407,7 @@ model CampaignAIReport {
   suggestions    Json
   videoBrief     Json?
   generatedAt    DateTime           @default(now())
-  modelUsed      String             @default("claude-sonnet-4-6")
+  modelUsed      String             @default("gemini-2.5-flash")
   organization   Organization       @relation(fields: [organizationId], references: [id])
   campaign       Campaign?          @relation(fields: [campaignId], references: [id])
 
@@ -496,6 +501,7 @@ enum AssetType {
   VIDEO
   IMAGE
   AUDIO
+  RENDERED
 }
 
 enum CampaignStatus {
