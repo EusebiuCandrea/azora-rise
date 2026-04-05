@@ -39,8 +39,10 @@ model Organization {
   metaConnection    MetaConnection?
   products          Product[]
   videoAssets       VideoAsset[]
+  videoAds          VideoAd[]
   productVideos     ProductVideo[]
   campaigns         Campaign[]
+  campaignAIReports CampaignAIReport[]
   orders            Order[]
   monthlyExpenses  MonthlyExpense[]
   productSnapshots ProductProfitabilitySnapshot[]
@@ -117,6 +119,7 @@ model Product {
   orderItems     OrderItem[]
   profitSnapshots  ProductProfitabilitySnapshot[]
   metaMappings     MetaProductMapping[]
+  videoAds    VideoAd[]
 
   @@unique([organizationId, shopifyId])
   @@index([organizationId])
@@ -163,11 +166,30 @@ model VideoAsset {
   sizeBytes       Int?
   durationSeconds Float?
   tags            String[]
+  adId  String?
+  ad    VideoAd? @relation(fields: [adId], references: [id], onDelete: SetNull)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+  @@index([organizationId, adId])
+}
+
+model VideoAd {
+  id             String       @id @default(cuid())
+  organizationId String
+  productId      String
+  name           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  assets         VideoAsset[]
+
+  @@unique([productId, name])
+  @@index([organizationId])
+  @@index([productId])
 }
 
 model Campaign {
@@ -187,7 +209,8 @@ model Campaign {
   metrics        CampaignMetrics[]
   adSets         AdSet[]
   alerts         CampaignAlert[]
-  metaMappings     MetaProductMapping[]
+  aiReports      CampaignAIReport[]
+  metaMappings   MetaProductMapping[]
 
   @@index([organizationId])
 }
@@ -203,10 +226,33 @@ model CampaignMetrics {
   roas        Float?
   cpm         Float?
   ctr         Float?
-  createdAt   DateTime @default(now())
-  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  // Audience
+  reach         Int?
+  frequency     Float?
+
+  // Revenue
+  purchaseValue Float?
+
+  // Funnel
+  landingPageViews Int?
+  addToCart        Int?
+  initiateCheckout Int?
+
+  // Video
+  videoPlays           Int?
+  videoP25             Int?
+  videoP50             Int?
+  videoP75             Int?
+  videoP95             Int?
+  videoAvgWatchTimeSec Float?
+  videoThruPlays       Int?
+
+  createdAt DateTime @default(now())
+  campaign  Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, date])
+  @@index([campaignId])
 }
 
 model AdSet {
@@ -260,7 +306,29 @@ model AdSetMetrics {
   roas        Float?
   cpm         Float?
   ctr         Float?
-  adSet       AdSet    @relation(fields: [adSetId], references: [id], onDelete: Cascade)
+
+  // Audience
+  reach         Int?
+  frequency     Float?
+
+  // Revenue
+  purchaseValue Float?
+
+  // Funnel
+  landingPageViews Int?
+  addToCart        Int?
+  initiateCheckout Int?
+
+  // Video
+  videoPlays           Int?
+  videoP25             Int?
+  videoP50             Int?
+  videoP75             Int?
+  videoP95             Int?
+  videoAvgWatchTimeSec Float?
+  videoThruPlays       Int?
+
+  adSet AdSet @relation(fields: [adSetId], references: [id], onDelete: Cascade)
 
   @@unique([adSetId, date])
   @@index([adSetId])
@@ -277,7 +345,29 @@ model AdMetrics {
   roas        Float?
   cpm         Float?
   ctr         Float?
-  ad          Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  // Audience
+  reach         Int?
+  frequency     Float?
+
+  // Revenue
+  purchaseValue Float?
+
+  // Funnel
+  landingPageViews Int?
+  addToCart        Int?
+  initiateCheckout Int?
+
+  // Video
+  videoPlays           Int?
+  videoP25             Int?
+  videoP50             Int?
+  videoP75             Int?
+  videoP95             Int?
+  videoAvgWatchTimeSec Float?
+  videoThruPlays       Int?
+
+  ad Ad @relation(fields: [adId], references: [id], onDelete: Cascade)
 
   @@unique([adId, date])
   @@index([adId])
@@ -298,6 +388,32 @@ model CampaignAlert {
 
   @@index([organizationId, isRead])
   @@index([campaignId])
+}
+
+model CampaignAIReport {
+  id             String             @id @default(cuid())
+  organizationId String
+  campaignId     String?
+  reportType     CampaignReportType
+  healthScore    Int?
+  status         String
+  summary        String
+  problems       Json
+  suggestions    Json
+  videoBrief     Json?
+  generatedAt    DateTime           @default(now())
+  modelUsed      String             @default("claude-sonnet-4-6")
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  campaign       Campaign?          @relation(fields: [campaignId], references: [id])
+
+  @@index([organizationId, reportType, generatedAt])
+  @@index([campaignId])
+}
+
+enum CampaignReportType {
+  DAILY_DIGEST
+  CAMPAIGN_DEEP
+  VIDEO_BRIEF
 }
 
 // Subscription model — Phase 6 (SaaS), see spec 2026-03-28-rise-platform-design.md
@@ -397,6 +513,10 @@ enum AlertType {
   AUTO_PAUSED
   LEARNING_PHASE
   BUDGET_ENDING
+  FREQUENCY_HIGH
+  LANDING_PAGE_DROP
+  NO_ADD_TO_CART
+  HOOK_RATE_LOW
 }
 
 // ─── Sub-proiect 5: Profitability Engine ──────────────────────────────────────
