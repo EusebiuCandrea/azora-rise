@@ -19,7 +19,10 @@ export function useSyncCampaigns() {
   return useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/meta/sync", { method: "POST" })
-      if (!res.ok) throw new Error("Sync failed")
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body?.error ?? `Sync eșuat (${res.status})`)
+      }
       return res.json()
     },
     onSuccess: () => {
