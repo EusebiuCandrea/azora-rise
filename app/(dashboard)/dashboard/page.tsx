@@ -387,11 +387,9 @@ export default async function DashboardPage() {
               <tbody>
                 {visibleActiveCampaigns.map((c) => {
                   const purchases = c.metrics.reduce((s, m) => s + m.purchases, 0)
-                  const metricsWithRoas = c.metrics.filter((m) => m.roas !== null)
-                  const avgMetricRoas =
-                    metricsWithRoas.length > 0
-                      ? metricsWithRoas.reduce((s, m) => s + (m.roas ?? 0), 0) / metricsWithRoas.length
-                      : null
+                  const totalSpend = c.metrics.reduce((s, m) => s + m.spend, 0)
+                  const totalPurchaseValue = c.metrics.reduce((s, m) => s + (m.purchaseValue ?? 0), 0)
+                  const avgMetricRoas = totalSpend > 0 && totalPurchaseValue > 0 ? totalPurchaseValue / totalSpend : null
                   return (
                     <tr key={c.id} className="border-t border-[#E7E5E4] hover:bg-[#FAFAF9] transition-colors">
                       <td className="px-4 py-3">
