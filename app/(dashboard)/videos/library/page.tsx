@@ -151,6 +151,7 @@ export default async function VideoLibraryPage({
           unassignedCount={unassignedCount}
           activeProductId={productFilter}
           activeAdId={adFilter}
+          activeUnassigned={!!unassigned}
         />
 
         {/* Main content */}

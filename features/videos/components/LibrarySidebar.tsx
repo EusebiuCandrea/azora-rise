@@ -21,6 +21,7 @@ interface LibrarySidebarProps {
   unassignedCount: number
   activeProductId?: string
   activeAdId?: string
+  activeUnassigned?: boolean
 }
 
 export function LibrarySidebar({
@@ -29,6 +30,7 @@ export function LibrarySidebar({
   unassignedCount,
   activeProductId,
   activeAdId,
+  activeUnassigned,
 }: LibrarySidebarProps) {
   const productsWithAssets = products.filter(
     (p) => p.videoAds.some((ad) => ad._count.assets > 0)
@@ -116,7 +118,9 @@ export function LibrarySidebar({
           href="/videos/library?unassigned=1"
           className={cn(
             'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
-            'text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
+            activeUnassigned
+              ? 'bg-[#FFFBEB] text-[#1C1917] font-semibold'
+              : 'text-[#78716C] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
           )}
         >
           <FolderOpen className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
