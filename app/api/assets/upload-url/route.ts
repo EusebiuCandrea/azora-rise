@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
     const productSlug = toSlug(ad.product.title)
     const adSlug = toSlug(ad.name)
-    r2Key = `${orgId}/assets/${productSlug}/${adSlug}/${sanitized}`
+    r2Key = `${orgId}/assets/${productSlug}/${adSlug}-${adId.slice(-6)}/${sanitized}`
     resolvedAdId = adId
   } else {
     r2Key = `${orgId}/assets/_unassigned/${sanitized}`
