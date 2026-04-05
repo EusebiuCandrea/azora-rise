@@ -43,7 +43,7 @@ export default async function CampaignDetailPage({
       where: { organizationId: orgId, adSet: { campaign: { id } } },
       include: {
         metrics: {
-          where: { date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+          where: { date: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
           select: { spend: true, impressions: true, clicks: true, purchases: true, purchaseValue: true, ctr: true, videoPlays: true, videoP25: true },
         },
       },
@@ -53,7 +53,7 @@ export default async function CampaignDetailPage({
       where: { organizationId: orgId, campaignId: id },
       include: {
         metrics: {
-          where: { date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+          where: { date: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
           select: { spend: true, impressions: true, clicks: true, purchases: true, purchaseValue: true, roas: true, ctr: true, frequency: true },
         },
       },
