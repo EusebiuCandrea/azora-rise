@@ -1,5 +1,8 @@
 import { Composition } from 'remotion'
-import { FormatVideo, FormatVideoProps } from './FormatVideo'
+import { FormatVideo as FormatVideoComp, FormatVideoProps } from './FormatVideo'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const FormatVideo = FormatVideoComp as any
 
 const defaultProps: FormatVideoProps = {
   videoUrl:
