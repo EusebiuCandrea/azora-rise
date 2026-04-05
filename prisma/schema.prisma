@@ -203,6 +203,19 @@ model CampaignMetrics {
   roas        Float?
   cpm         Float?
   ctr         Float?
+  reach                Int?
+  frequency            Float?
+  purchaseValue        Float?
+  landingPageViews     Int?
+  addToCart            Int?
+  initiateCheckout     Int?
+  videoPlays           Int?
+  videoP25             Int?
+  videoP50             Int?
+  videoP75             Int?
+  videoP95             Int?
+  videoAvgWatchTimeSec Float?
+  videoThruPlays       Int?
   createdAt   DateTime @default(now())
   campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
@@ -260,6 +273,19 @@ model AdSetMetrics {
   roas        Float?
   cpm         Float?
   ctr         Float?
+  reach                Int?
+  frequency            Float?
+  purchaseValue        Float?
+  landingPageViews     Int?
+  addToCart            Int?
+  initiateCheckout     Int?
+  videoPlays           Int?
+  videoP25             Int?
+  videoP50             Int?
+  videoP75             Int?
+  videoP95             Int?
+  videoAvgWatchTimeSec Float?
+  videoThruPlays       Int?
   adSet       AdSet    @relation(fields: [adSetId], references: [id], onDelete: Cascade)
 
   @@unique([adSetId, date])
@@ -277,6 +303,19 @@ model AdMetrics {
   roas        Float?
   cpm         Float?
   ctr         Float?
+  reach                Int?
+  frequency            Float?
+  purchaseValue        Float?
+  landingPageViews     Int?
+  addToCart            Int?
+  initiateCheckout     Int?
+  videoPlays           Int?
+  videoP25             Int?
+  videoP50             Int?
+  videoP75             Int?
+  videoP95             Int?
+  videoAvgWatchTimeSec Float?
+  videoThruPlays       Int?
   ad          Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
 
   @@unique([adId, date])
@@ -397,6 +436,10 @@ enum AlertType {
   AUTO_PAUSED
   LEARNING_PHASE
   BUDGET_ENDING
+  FREQUENCY_HIGH
+  LANDING_PAGE_DROP
+  NO_ADD_TO_CART
+  HOOK_RATE_LOW
 }
 
 // ─── Sub-proiect 5: Profitability Engine ──────────────────────────────────────
