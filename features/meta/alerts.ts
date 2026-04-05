@@ -36,7 +36,101 @@ type CampaignWithMetrics = Awaited<
     cpm: number | null
     ctr: number | null
     purchases: number
+    frequency: number | null
+    landingPageViews: number | null
+    addToCart: number | null
+    videoPlays: number | null
+    videoP25: number | null
   }>
+}
+
+async function checkFrequencyAlert(
+  campaign: CampaignWithMetrics,
+  config: AlertConfig,
+  organizationId: string
+): Promise<void> {
+  const recentMetrics = campaign.metrics.slice(0, 3)
+  if (recentMetrics.length < 3) return
+
+  const validMetrics = recentMetrics.filter((m) => m.frequency != null)
+  if (validMetrics.length === 0) return
+
+  const avgFrequency = validMetrics.reduce((sum, m) => sum + m.frequency!, 0) / validMetrics.length
+
+  if (avgFrequency <= 3.5) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.FREQUENCY_HIGH, {
+    frequency: avgFrequency,
+    threshold: 3.5,
+    message: `Frecvență ridicată (${avgFrequency.toFixed(2)}) în ultimele 3 zile — audiența poate fi obosită de anunț`,
+  })
+}
+
+async function checkLandingPageAlert(
+  campaign: CampaignWithMetrics,
+  config: AlertConfig,
+  organizationId: string
+): Promise<void> {
+  const recentMetrics = campaign.metrics.slice(0, 7)
+  const totalClicks = recentMetrics.reduce((sum, m) => sum + (m.clicks ?? 0), 0)
+  const totalLpv = recentMetrics.reduce((sum, m) => sum + (m.landingPageViews ?? 0), 0)
+
+  if (totalClicks < 100) return
+
+  const lpvRate = totalLpv / totalClicks
+  if (lpvRate >= 0.5) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.LANDING_PAGE_DROP, {
+    landingPageViewRate: lpvRate,
+    threshold: 0.5,
+    totalClicks,
+    message: `Rata landing page (${(lpvRate * 100).toFixed(1)}%) sub 50% din ${totalClicks} click-uri — verifică viteza paginii sau redirecționările`,
+  })
+}
+
+async function checkNoAddToCartAlert(
+  campaign: CampaignWithMetrics,
+  config: AlertConfig,
+  organizationId: string
+): Promise<void> {
+  const recentMetrics = campaign.metrics.slice(0, 3)
+  if (recentMetrics.length < 3) return
+
+  const totalSpend = recentMetrics.reduce((sum, m) => sum + (m.spend ?? 0), 0)
+  const totalAddToCart = recentMetrics.reduce((sum, m) => sum + (m.addToCart ?? 0), 0)
+
+  if (totalSpend < 200) return
+  if (totalAddToCart > 0) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.NO_ADD_TO_CART, {
+    spend: totalSpend,
+    addToCart: totalAddToCart,
+    message: `Spend de ${totalSpend.toFixed(0)} RON în 3 zile fără niciun Add to Cart — consideră schimbarea targetării sau a ofertei`,
+  })
+}
+
+async function checkHookRateAlert(
+  campaign: CampaignWithMetrics,
+  config: AlertConfig,
+  organizationId: string
+): Promise<void> {
+  const recentMetrics = campaign.metrics.slice(0, 3)
+  if (recentMetrics.length < 1) return
+
+  const totalPlays = recentMetrics.reduce((sum, m) => sum + (m.videoPlays ?? 0), 0)
+  const totalP25 = recentMetrics.reduce((sum, m) => sum + (m.videoP25 ?? 0), 0)
+
+  if (totalPlays < 100) return
+
+  const hookRate = totalP25 / totalPlays
+  if (hookRate >= 0.25) return
+
+  await createAlertIfNotExists(campaign.id, organizationId, AlertType.HOOK_RATE_LOW, {
+    hookRate,
+    threshold: 0.25,
+    videoPlays: totalPlays,
+    message: `Hook rate scăzut (${(hookRate * 100).toFixed(1)}%) din ${totalPlays} vizionări — primele 3 secunde ale video-ului nu captează atenția`,
+  })
 }
 
 export async function checkAlertsForOrganization(
@@ -58,6 +152,10 @@ export async function checkAlertsForOrganization(
     await checkSpendAlert(campaign as CampaignWithMetrics, config, organizationId)
     await checkCtrAlert(campaign as CampaignWithMetrics, config, organizationId)
     await checkCpmAlert(campaign as CampaignWithMetrics, config, organizationId)
+    await checkFrequencyAlert(campaign as CampaignWithMetrics, config, organizationId)
+    await checkLandingPageAlert(campaign as CampaignWithMetrics, config, organizationId)
+    await checkNoAddToCartAlert(campaign as CampaignWithMetrics, config, organizationId)
+    await checkHookRateAlert(campaign as CampaignWithMetrics, config, organizationId)
   }
 }
 
