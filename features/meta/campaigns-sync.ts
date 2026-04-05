@@ -136,7 +136,7 @@ export async function syncDailyMetrics(
   dateTo?: string
 ): Promise<{ metricsUpserted: number; error?: string }> {
   const resolvedFrom = dateFrom ?? getYesterday()
-  const resolvedTo = dateTo ?? resolvedFrom
+  const resolvedTo = dateTo ?? getYesterday()
 
   const connection = await db.metaConnection.findUnique({
     where: { organizationId },
@@ -226,7 +226,7 @@ export async function syncAdSetMetrics(
   dateTo?: string
 ): Promise<{ metricsUpserted: number; error?: string }> {
   const resolvedFrom = dateFrom ?? getYesterday()
-  const resolvedTo = dateTo ?? resolvedFrom
+  const resolvedTo = dateTo ?? getYesterday()
 
   const connection = await db.metaConnection.findUnique({
     where: { organizationId },
