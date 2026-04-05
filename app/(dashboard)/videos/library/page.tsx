@@ -191,15 +191,17 @@ export default async function VideoLibraryPage({
 
       {/* 2-column layout */}
       <div className="flex gap-6">
-        {/* Sidebar */}
-        <LibrarySidebar
-          products={products}
-          totalCount={totalCount}
-          unassignedCount={unassignedCount}
-          activeProductId={productFilter}
-          activeAdId={adFilter}
-          activeUnassigned={!!unassigned}
-        />
+        {/* Sidebar — hidden on mobile */}
+        <div className="hidden lg:block">
+          <LibrarySidebar
+            products={products}
+            totalCount={totalCount}
+            unassignedCount={unassignedCount}
+            activeProductId={productFilter}
+            activeAdId={adFilter}
+            activeUnassigned={!!unassigned}
+          />
+        </div>
 
         {/* Main content */}
         <div className="flex-1 min-w-0 space-y-5">
@@ -251,7 +253,7 @@ export default async function VideoLibraryPage({
           {(() => {
             const displayed = typeFilter === 'video' ? videos : typeFilter === 'image' ? images : typeFilter === 'audio' ? audios : assetsWithUrls
             return displayed.length > 0 ? (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {displayed.map((asset) => (
                 <AssetCardShell key={asset.id} asset={asset} />
               ))}
