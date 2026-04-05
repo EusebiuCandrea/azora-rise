@@ -50,6 +50,16 @@ export interface MetaInsights {
   ctr?: string
   actions?: Array<{ action_type: string; value: string }>
   action_values?: Array<{ action_type: string; value: string }>
+  reach?: string
+  frequency?: string
+  landing_page_views?: Array<{ action_type: string; value: string }>
+  video_p25_watched_actions?: Array<{ action_type: string; value: string }>
+  video_p50_watched_actions?: Array<{ action_type: string; value: string }>
+  video_p75_watched_actions?: Array<{ action_type: string; value: string }>
+  video_p95_watched_actions?: Array<{ action_type: string; value: string }>
+  video_avg_time_watch_actions?: Array<{ action_type: string; value: string }>
+  video_thruplay_watched_actions?: Array<{ action_type: string; value: string }>
+  video_play_actions?: Array<{ action_type: string; value: string }>
 }
 
 export interface TokenValidation {
@@ -81,6 +91,29 @@ export function parsePurchaseValue(insights: MetaInsights): number {
       a.action_type === "offsite_conversion.fb_pixel_purchase"
   )
   return actionValue ? parseFloat(actionValue.value) : 0
+}
+
+export function parseActionCount(
+  actions: Array<{ action_type: string; value: string }> | undefined,
+  type = "video_view"
+): number | null {
+  if (!actions) return null
+  const match = actions.find((a) => a.action_type === type)
+  return match ? Math.round(parseFloat(match.value)) : null
+}
+
+export function parseVideoMetric(
+  actions: Array<{ action_type: string; value: string }> | undefined
+): number | null {
+  if (!actions || actions.length === 0) return null
+  return Math.round(parseFloat(actions[0].value))
+}
+
+export function parseVideoAvgWatchTime(
+  actions: Array<{ action_type: string; value: string }> | undefined
+): number | null {
+  if (!actions || actions.length === 0) return null
+  return parseFloat(actions[0].value) // seconds, keep decimal
 }
 
 async function metaFetch<T>(
@@ -279,6 +312,16 @@ export async function fetchCampaignInsights(
     "ctr",
     "actions",
     "action_values",
+    "reach",
+    "frequency",
+    "landing_page_views",
+    "video_p25_watched_actions",
+    "video_p50_watched_actions",
+    "video_p75_watched_actions",
+    "video_p95_watched_actions",
+    "video_avg_time_watch_actions",
+    "video_thruplay_watched_actions",
+    "video_play_actions",
   ].join(",")
 
   const data = await metaFetch<{ data: MetaInsights[] }>(
@@ -290,6 +333,7 @@ export async function fetchCampaignInsights(
       time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
       time_increment: "1",
       limit: "2000",
+      use_account_attribution_setting: "true",
     }
   )
 
