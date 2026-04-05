@@ -314,7 +314,6 @@ export async function fetchCampaignInsights(
     "frequency",
     "actions",
     "action_values",
-    "landing_page_views",
     "video_play_actions",
     "video_avg_time_watched_actions",
     "video_p25_watched_actions",
