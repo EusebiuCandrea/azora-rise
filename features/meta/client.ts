@@ -332,7 +332,7 @@ export async function fetchCampaignInsights(
       level,
       time_range: JSON.stringify({ since: dateFrom, until: dateTo }),
       time_increment: "1",
-      use_account_attribution_setting: "true",
+      ...(level !== "ad" && { use_account_attribution_setting: "true" }),
       limit: "2000",
     }
   )
