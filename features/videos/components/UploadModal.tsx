@@ -27,6 +27,7 @@ export function UploadModal({ products, onClose }: UploadModalProps) {
   async function handleProductContinue() {
     if (!selectedProduct) return
     setLoadingAds(true)
+    setSelectedAd(null)
     try {
       const res = await fetch(`/api/video-ads?productId=${selectedProduct.id}`)
       const data = await res.json()
