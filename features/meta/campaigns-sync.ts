@@ -8,6 +8,10 @@ import {
   parseMetaBudget,
   parsePurchases,
   parsePurchaseValue,
+  parseActionCount,
+  parseVideoMetric,
+  parseVideoAvgWatchTime,
+  type MetaInsights,
 } from "./client"
 
 // ─── Sync complet: campanii + ad sets + ads ───────────────────────────────────
@@ -141,62 +145,188 @@ export async function syncDailyMetrics(
 
   const accessToken = decrypt(connection.accessTokenEncrypted)
 
-  const insights = await fetchCampaignInsights(
-    accessToken,
-    connection.adAccountId,
-    resolvedFrom,
-    resolvedTo,
-    "campaign"
-  )
+  try {
+    const insights = await fetchCampaignInsights(
+      accessToken,
+      connection.adAccountId,
+      resolvedFrom,
+      resolvedTo,
+      "campaign"
+    )
 
-  let metricsUpserted = 0
+    let metricsUpserted = 0
 
-  for (const insight of insights) {
-    if (!insight.campaign_id) continue
+    for (const insight of insights) {
+      if (!insight.campaign_id) continue
 
-    const campaign = await db.campaign.findFirst({
-      where: { organizationId, metaCampaignId: insight.campaign_id },
-    })
-    if (!campaign) continue
+      const campaign = await db.campaign.findFirst({
+        where: { organizationId, metaCampaignId: insight.campaign_id },
+      })
+      if (!campaign) continue
 
-    const insightDate = insight.date_start
-    const spend = parseFloat(insight.spend || "0")
-    const purchases = parsePurchases(insight)
-    const purchaseValue = parsePurchaseValue(insight)
-    const impressions = parseInt(insight.impressions || "0", 10)
-    const clicks = parseInt(insight.clicks || "0", 10)
-    const cpm = parseFloat(insight.cpm || "0")
-    const ctr = parseFloat(insight.ctr || "0")
-    const roas = spend > 0 ? purchaseValue / spend : null
+      const insightDate = insight.date_start
+      const spend = parseFloat(insight.spend || "0")
+      const purchases = parsePurchases(insight)
+      const purchaseValue = parsePurchaseValue(insight)
+      const impressions = parseInt(insight.impressions || "0", 10)
+      const clicks = parseInt(insight.clicks || "0", 10)
+      const cpm = parseFloat(insight.cpm || "0")
+      const ctr = parseFloat(insight.ctr || "0")
+      const roas = spend > 0 ? purchaseValue / spend : null
 
-    await db.campaignMetrics.upsert({
-      where: {
-        campaignId_date: {
+      await db.campaignMetrics.upsert({
+        where: {
+          campaignId_date: {
+            campaignId: campaign.id,
+            date: new Date(insightDate),
+          },
+        },
+        create: {
           campaignId: campaign.id,
           date: new Date(insightDate),
+          spend,
+          impressions,
+          clicks,
+          purchases,
+          roas,
+          cpm,
+          ctr,
+          ...buildExtendedMetricFields(insight, purchaseValue),
         },
-      },
-      create: {
-        campaignId: campaign.id,
-        date: new Date(insightDate),
-        spend,
-        impressions,
-        clicks,
-        purchases,
-        roas,
-        cpm,
-        ctr,
-      },
-      update: { spend, impressions, clicks, purchases, roas, cpm, ctr },
-    })
+        update: {
+          spend,
+          impressions,
+          clicks,
+          purchases,
+          roas,
+          cpm,
+          ctr,
+          ...buildExtendedMetricFields(insight, purchaseValue),
+        },
+      })
 
-    metricsUpserted++
+      metricsUpserted++
+    }
+
+    return { metricsUpserted }
+  } catch (error) {
+    console.error("[Meta Sync Campaign] Error:", error)
+    return {
+      metricsUpserted: 0,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
   }
+}
 
-  return { metricsUpserted }
+// ─── Sync metrici adset zilnice ───────────────────────────────────────────────
+
+export async function syncAdSetMetrics(
+  organizationId: string,
+  dateFrom?: string,
+  dateTo?: string
+): Promise<{ metricsUpserted: number; error?: string }> {
+  const resolvedFrom = dateFrom ?? getYesterday()
+  const resolvedTo = dateTo ?? resolvedFrom
+
+  const connection = await db.metaConnection.findUnique({
+    where: { organizationId },
+  })
+  if (!connection) throw new Error("No Meta connection")
+
+  const accessToken = decrypt(connection.accessTokenEncrypted)
+
+  try {
+    const insights = await fetchCampaignInsights(
+      accessToken,
+      connection.adAccountId,
+      resolvedFrom,
+      resolvedTo,
+      "adset"
+    )
+
+    let metricsUpserted = 0
+
+    for (const insight of insights) {
+      if (!insight.adset_id) continue
+
+      const adSet = await db.adSet.findFirst({
+        where: { organizationId, metaAdSetId: insight.adset_id },
+      })
+      if (!adSet) continue
+
+      const insightDate = insight.date_start
+      const spend = parseFloat(insight.spend || "0")
+      const purchases = parsePurchases(insight)
+      const purchaseValue = parsePurchaseValue(insight)
+      const impressions = parseInt(insight.impressions || "0", 10)
+      const clicks = parseInt(insight.clicks || "0", 10)
+      const cpm = parseFloat(insight.cpm || "0")
+      const ctr = parseFloat(insight.ctr || "0")
+      const roas = spend > 0 ? purchaseValue / spend : null
+
+      await db.adSetMetrics.upsert({
+        where: {
+          adSetId_date: {
+            adSetId: adSet.id,
+            date: new Date(insightDate),
+          },
+        },
+        create: {
+          adSetId: adSet.id,
+          date: new Date(insightDate),
+          spend,
+          impressions,
+          clicks,
+          purchases,
+          roas,
+          cpm,
+          ctr,
+          ...buildExtendedMetricFields(insight, purchaseValue),
+        },
+        update: {
+          spend,
+          impressions,
+          clicks,
+          purchases,
+          roas,
+          cpm,
+          ctr,
+          ...buildExtendedMetricFields(insight, purchaseValue),
+        },
+      })
+
+      metricsUpserted++
+    }
+
+    return { metricsUpserted }
+  } catch (error) {
+    console.error("[Meta Sync AdSet] Error:", error)
+    return {
+      metricsUpserted: 0,
+      error: error instanceof Error ? error.message : "Unknown error",
+    }
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildExtendedMetricFields(insight: MetaInsights, purchaseValue: number) {
+  return {
+    reach: insight.reach ? parseInt(insight.reach, 10) : null,
+    frequency: insight.frequency ? parseFloat(insight.frequency) : null,
+    purchaseValue: purchaseValue > 0 ? purchaseValue : null,
+    landingPageViews: parseActionCount(insight.landing_page_views, "landing_page_view"),
+    addToCart: parseActionCount(insight.actions, "add_to_cart"),
+    initiateCheckout: parseActionCount(insight.actions, "initiate_checkout"),
+    videoPlays: parseVideoMetric(insight.video_play_actions),
+    videoP25: parseVideoMetric(insight.video_p25_watched_actions),
+    videoP50: parseVideoMetric(insight.video_p50_watched_actions),
+    videoP75: parseVideoMetric(insight.video_p75_watched_actions),
+    videoP95: parseVideoMetric(insight.video_p95_watched_actions),
+    videoAvgWatchTimeSec: parseVideoAvgWatchTime(insight.video_avg_time_watch_actions),
+    videoThruPlays: parseVideoMetric(insight.video_thruplay_watched_actions),
+  }
+}
 
 function mapMetaStatus(status: string): "ACTIVE" | "PAUSED" | "COMPLETED" | "DRAFT" {
   switch (status) {
