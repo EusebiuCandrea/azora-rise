@@ -9,9 +9,10 @@ export async function POST(req: NextRequest) {
 
   const campaignsResult = await syncCampaignsFromMeta(organizationId)
 
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0]
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  const metricsResult = await syncDailyMetrics(organizationId, thirtyDaysAgo, yesterday)
+  const from = new Date()
+  from.setDate(from.getDate() - 30)
+  const thirtyDaysAgo = from.toISOString().split("T")[0]
+  const metricsResult = await syncDailyMetrics(organizationId, thirtyDaysAgo)
 
   return NextResponse.json({
     success: true,
