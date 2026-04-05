@@ -53,12 +53,13 @@ export interface MetaInsights {
   actions?: Array<{ action_type: string; value: string }>
   action_values?: Array<{ action_type: string; value: string }>
   video_avg_time_watched_actions?: Array<{ action_type: string; value: string }>
+  video_play_actions?: Array<{ action_type: string; value: string }>
   video_p25_watched_actions?: Array<{ action_type: string; value: string }>
   video_p50_watched_actions?: Array<{ action_type: string; value: string }>
   video_p75_watched_actions?: Array<{ action_type: string; value: string }>
   video_p95_watched_actions?: Array<{ action_type: string; value: string }>
-  video_play_actions?: Array<{ action_type: string; value: string }>
   video_thruplay_watched_actions?: Array<{ action_type: string; value: string }>
+  landing_page_views?: Array<{ action_type: string; value: string }>
 }
 
 export interface TokenValidation {
@@ -106,6 +107,13 @@ export function parseVideoMetric(
   if (!arr || arr.length === 0) return null
   const total = arr.reduce((sum, a) => sum + parseFloat(a.value), 0)
   return total || null
+}
+
+export function parseVideoAvgWatchTime(
+  arr: Array<{ action_type: string; value: string }> | undefined
+): number | null {
+  if (!arr || arr.length === 0) return null
+  return parseFloat(arr[0].value)
 }
 
 async function metaFetch<T>(
@@ -306,12 +314,13 @@ export async function fetchCampaignInsights(
     "frequency",
     "actions",
     "action_values",
+    "landing_page_views",
+    "video_play_actions",
     "video_avg_time_watched_actions",
     "video_p25_watched_actions",
     "video_p50_watched_actions",
     "video_p75_watched_actions",
     "video_p95_watched_actions",
-    "video_play_actions",
     "video_thruplay_watched_actions",
   ].join(",")
 

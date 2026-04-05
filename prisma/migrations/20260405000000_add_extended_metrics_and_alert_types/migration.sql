@@ -1,0 +1,53 @@
+-- AlterEnum
+ALTER TYPE "AlertType" ADD VALUE 'FREQUENCY_HIGH';
+ALTER TYPE "AlertType" ADD VALUE 'LANDING_PAGE_DROP';
+ALTER TYPE "AlertType" ADD VALUE 'NO_ADD_TO_CART';
+ALTER TYPE "AlertType" ADD VALUE 'HOOK_RATE_LOW';
+
+-- AlterTable CampaignMetrics
+ALTER TABLE "CampaignMetrics"
+  ADD COLUMN "reach" INTEGER,
+  ADD COLUMN "frequency" DOUBLE PRECISION,
+  ADD COLUMN "purchaseValue" DOUBLE PRECISION,
+  ADD COLUMN "landingPageViews" INTEGER,
+  ADD COLUMN "addToCart" INTEGER,
+  ADD COLUMN "initiateCheckout" INTEGER,
+  ADD COLUMN "videoPlays" INTEGER,
+  ADD COLUMN "videoP25" INTEGER,
+  ADD COLUMN "videoP50" INTEGER,
+  ADD COLUMN "videoP75" INTEGER,
+  ADD COLUMN "videoP95" INTEGER,
+  ADD COLUMN "videoAvgWatchTimeSec" DOUBLE PRECISION,
+  ADD COLUMN "videoThruPlays" INTEGER;
+
+-- AlterTable AdSetMetrics
+ALTER TABLE "AdSetMetrics"
+  ADD COLUMN "reach" INTEGER,
+  ADD COLUMN "frequency" DOUBLE PRECISION,
+  ADD COLUMN "purchaseValue" DOUBLE PRECISION,
+  ADD COLUMN "landingPageViews" INTEGER,
+  ADD COLUMN "addToCart" INTEGER,
+  ADD COLUMN "initiateCheckout" INTEGER,
+  ADD COLUMN "videoPlays" INTEGER,
+  ADD COLUMN "videoP25" INTEGER,
+  ADD COLUMN "videoP50" INTEGER,
+  ADD COLUMN "videoP75" INTEGER,
+  ADD COLUMN "videoP95" INTEGER,
+  ADD COLUMN "videoAvgWatchTimeSec" DOUBLE PRECISION,
+  ADD COLUMN "videoThruPlays" INTEGER;
+
+-- AlterTable AdMetrics
+ALTER TABLE "AdMetrics"
+  ADD COLUMN "reach" INTEGER,
+  ADD COLUMN "frequency" DOUBLE PRECISION,
+  ADD COLUMN "purchaseValue" DOUBLE PRECISION,
+  ADD COLUMN "landingPageViews" INTEGER,
+  ADD COLUMN "addToCart" INTEGER,
+  ADD COLUMN "initiateCheckout" INTEGER,
+  ADD COLUMN "videoPlays" INTEGER,
+  ADD COLUMN "videoP25" INTEGER,
+  ADD COLUMN "videoP50" INTEGER,
+  ADD COLUMN "videoP75" INTEGER,
+  ADD COLUMN "videoP95" INTEGER,
+  ADD COLUMN "videoAvgWatchTimeSec" DOUBLE PRECISION,
+  ADD COLUMN "videoThruPlays" INTEGER;

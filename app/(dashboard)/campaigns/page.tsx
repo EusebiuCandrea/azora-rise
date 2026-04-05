@@ -1,5 +1,6 @@
 import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
+import { getYesterdayUTC } from '@/lib/utils'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { CampaignsTable } from '@/features/meta/components/CampaignsTable'
@@ -14,6 +15,8 @@ export default async function CampaignsPage() {
   const session = await requireAuth()
   const orgId = await getCurrentOrgId(session)
 
+  const yesterday = getYesterdayUTC()
+
   const metaConnected = orgId
     ? !!(await db.metaConnection.findUnique({ where: { organizationId: orgId }, select: { id: true } }))
     : false
@@ -23,7 +26,7 @@ export default async function CampaignsPage() {
         db.campaign.findMany({
           where: { organizationId: orgId },
           include: {
-            metrics: { orderBy: { date: 'desc' }, take: 30 },
+            metrics: { where: { date: { lte: yesterday } }, orderBy: { date: 'desc' }, take: 30 },
             aiReports: {
               where: { reportType: CampaignReportType.CAMPAIGN_DEEP },
               orderBy: { generatedAt: 'desc' },

@@ -12,6 +12,11 @@ interface AlertConfig {
   ctrLowThreshold: number
   ctrMinImpressions: number
   cpmHighThreshold: number
+  frequencyHighThreshold?: number      // default 3.5
+  landingPageViewMinRate?: number      // default 0.5
+  noAddToCartSpendThreshold?: number   // default 200
+  hookRateMinThreshold?: number        // default 0.25
+  hookRateMinPlays?: number            // default 100
 }
 
 const DEFAULT_CONFIG: AlertConfig = {
@@ -23,6 +28,11 @@ const DEFAULT_CONFIG: AlertConfig = {
   ctrLowThreshold: 0.8,
   ctrMinImpressions: 1000,
   cpmHighThreshold: 40,
+  frequencyHighThreshold: 3.5,
+  landingPageViewMinRate: 0.5,
+  noAddToCartSpendThreshold: 200,
+  hookRateMinThreshold: 0.25,
+  hookRateMinPlays: 100,
 }
 
 type CampaignWithMetrics = Awaited<

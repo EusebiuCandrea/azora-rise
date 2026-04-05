@@ -10,6 +10,7 @@ import {
   parsePurchaseValue,
   parseActionCount,
   parseVideoMetric,
+  parseVideoAvgWatchTime,
 } from "./client"
 
 // ─── Sync complet: campanii + ad sets + ads ───────────────────────────────────
@@ -134,7 +135,7 @@ export async function syncDailyMetrics(
   dateTo?: string
 ): Promise<{ metricsUpserted: number; error?: string }> {
   const resolvedFrom = dateFrom ?? getYesterday()
-  const resolvedTo = dateTo ?? resolvedFrom
+  const resolvedTo = dateTo ?? getYesterday()
 
   const connection = await db.metaConnection.findUnique({
     where: { organizationId },
@@ -182,22 +183,11 @@ export async function syncDailyMetrics(
     const videoP75 = parseVideoMetric(insight.video_p75_watched_actions)
     const videoP95 = parseVideoMetric(insight.video_p95_watched_actions)
     const videoThruPlays = parseVideoMetric(insight.video_thruplay_watched_actions)
-    const videoAvgWatchTimeSec = parseVideoMetric(insight.video_avg_time_watched_actions)
+    const videoAvgWatchTimeSec = parseVideoAvgWatchTime(insight.video_avg_time_watched_actions)
 
     const metricsData = {
-      spend,
-      impressions,
-      clicks,
-      purchases,
-      roas,
-      cpm,
-      ctr,
-      reach,
-      frequency,
-      purchaseValue,
-      landingPageViews,
-      addToCart,
-      initiateCheckout,
+      spend, impressions, clicks, purchases, roas, cpm, ctr,
+      reach, frequency, purchaseValue, landingPageViews, addToCart, initiateCheckout,
       videoPlays: videoPlays !== null ? Math.round(videoPlays) : null,
       videoP25: videoP25 !== null ? Math.round(videoP25) : null,
       videoP50: videoP50 !== null ? Math.round(videoP50) : null,
@@ -208,12 +198,7 @@ export async function syncDailyMetrics(
     }
 
     await db.campaignMetrics.upsert({
-      where: {
-        campaignId_date: {
-          campaignId: campaign.id,
-          date: new Date(insightDate),
-        },
-      },
+      where: { campaignId_date: { campaignId: campaign.id, date: new Date(insightDate) } },
       create: { campaignId: campaign.id, date: new Date(insightDate), ...metricsData },
       update: metricsData,
     })
@@ -394,8 +379,6 @@ export async function syncAdMetrics(
 
   return { metricsUpserted }
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function mapMetaStatus(status: string): "ACTIVE" | "PAUSED" | "COMPLETED" | "DRAFT" {
   switch (status) {

@@ -1,5 +1,6 @@
 import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
+import { getYesterdayUTC } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
@@ -22,11 +23,13 @@ export default async function CampaignDetailPage({
   const orgId = await getCurrentOrgId(session)
   if (!orgId) notFound()
 
+  const yesterday = new Date(Date.now() - 86400000)
+
   const [campaign, latestAIReport, scalingSuggestions, adMetrics] = await Promise.all([
     db.campaign.findFirst({
       where: { id, organizationId: orgId },
       include: {
-        metrics: { orderBy: { date: 'desc' }, take: 30 },
+        metrics: { where: { date: { lte: yesterday } }, orderBy: { date: 'desc' }, take: 30 },
         adSets: { orderBy: { createdAt: 'asc' } },
         alerts: { where: { isResolved: false }, orderBy: { triggeredAt: 'desc' } },
       },
