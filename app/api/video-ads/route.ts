@@ -47,13 +47,17 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const productId = searchParams.get('productId')
-  if (!productId) return NextResponse.json({ error: 'productId required' }, { status: 400 })
+  if (!productId) return NextResponse.json({ error: 'productId este obligatoriu' }, { status: 400 })
 
-  const ads = await db.videoAd.findMany({
-    where: { organizationId: orgId, productId },
-    select: { id: true, name: true },
-    orderBy: { createdAt: 'asc' },
-  })
+  try {
+    const ads = await db.videoAd.findMany({
+      where: { organizationId: orgId, productId },
+      select: { id: true, name: true },
+      orderBy: { createdAt: 'asc' },
+    })
 
-  return NextResponse.json(ads)
+    return NextResponse.json(ads)
+  } catch (err: any) {
+    return NextResponse.json({ error: 'Eroare server' }, { status: 500 })
+  }
 }
