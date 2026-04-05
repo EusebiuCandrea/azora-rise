@@ -2,7 +2,7 @@ import { requireAuth, getCurrentOrgId } from '@/features/auth/helpers'
 import { db } from '@/lib/db'
 import { getYesterdayUTC } from '@/lib/utils'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, GitCompareArrows } from 'lucide-react'
 import { CampaignsTable } from '@/features/meta/components/CampaignsTable'
 import { CampaignsSummaryBar } from '@/features/meta/components/CampaignsSummaryBar'
 import { MetaAlertBanner } from '@/features/meta/components/MetaAlertBanner'
@@ -83,6 +83,13 @@ export default async function CampaignsPage() {
         </div>
         <div className="flex items-center gap-2">
           {metaConnected && <SyncButton />}
+          <Link
+            href="/campaigns/compare"
+            className="flex items-center gap-2 px-4 h-9 border border-[#E7E5E4] text-[#44403C] hover:bg-[#F5F5F4] text-sm rounded-lg transition-colors"
+          >
+            <GitCompareArrows className="w-3.5 h-3.5" />
+            Compară
+          </Link>
           <Link
             href="/campaigns/new"
             className="flex items-center gap-2 px-4 h-9 bg-[#D4AF37] hover:bg-[#B8971F] text-[#1C1917] font-semibold text-sm rounded-lg transition-colors"
