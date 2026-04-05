@@ -12,7 +12,9 @@ export const r2 = new S3Client({
 
 const ALLOWED_CONTENT_TYPES = [
   'video/mp4',
+  'video/quicktime',
   'audio/mpeg',
+  'audio/mp4',
   'audio/wav',
   'image/jpeg',
   'image/png',
@@ -41,6 +43,24 @@ export async function getPresignedUploadUrl(
       ContentType: contentType,
     }),
     { expiresIn: 900 } // 15 min TTL
+  )
+}
+
+export async function getPresignedUploadUrlForKey(
+  key: string,
+  contentType: string
+): Promise<string> {
+  if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {
+    throw new Error(`File type not allowed: ${contentType}`)
+  }
+  return getSignedUrl(
+    r2,
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME!,
+      Key: key,
+      ContentType: contentType,
+    }),
+    { expiresIn: 900 }
   )
 }
 
