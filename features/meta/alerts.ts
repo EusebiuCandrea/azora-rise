@@ -12,6 +12,11 @@ interface AlertConfig {
   ctrLowThreshold: number
   ctrMinImpressions: number
   cpmHighThreshold: number
+  frequencyHighThreshold?: number      // default 3.5
+  landingPageViewMinRate?: number      // default 0.5
+  noAddToCartSpendThreshold?: number   // default 200
+  hookRateMinThreshold?: number        // default 0.25
+  hookRateMinPlays?: number            // default 100
 }
 
 const DEFAULT_CONFIG: AlertConfig = {
@@ -23,6 +28,11 @@ const DEFAULT_CONFIG: AlertConfig = {
   ctrLowThreshold: 0.8,
   ctrMinImpressions: 1000,
   cpmHighThreshold: 40,
+  frequencyHighThreshold: 3.5,
+  landingPageViewMinRate: 0.5,
+  noAddToCartSpendThreshold: 200,
+  hookRateMinThreshold: 0.25,
+  hookRateMinPlays: 100,
 }
 
 type CampaignWithMetrics = Awaited<
@@ -53,15 +63,16 @@ async function checkFrequencyAlert(
   if (recentMetrics.length < 3) return
 
   const validMetrics = recentMetrics.filter((m) => m.frequency != null)
-  if (validMetrics.length === 0) return
+  if (validMetrics.length < 3) return
 
   const avgFrequency = validMetrics.reduce((sum, m) => sum + m.frequency!, 0) / validMetrics.length
+  const threshold = config.frequencyHighThreshold ?? 3.5
 
-  if (avgFrequency <= 3.5) return
+  if (avgFrequency <= threshold) return
 
   await createAlertIfNotExists(campaign.id, organizationId, AlertType.FREQUENCY_HIGH, {
     frequency: avgFrequency,
-    threshold: 3.5,
+    threshold,
     message: `Frecvență ridicată (${avgFrequency.toFixed(2)}) în ultimele 3 zile — audiența poate fi obosită de anunț`,
   })
 }
@@ -78,13 +89,14 @@ async function checkLandingPageAlert(
   if (totalClicks < 100) return
 
   const lpvRate = totalLpv / totalClicks
-  if (lpvRate >= 0.5) return
+  const lpvThreshold = config.landingPageViewMinRate ?? 0.5
+  if (lpvRate >= lpvThreshold) return
 
   await createAlertIfNotExists(campaign.id, organizationId, AlertType.LANDING_PAGE_DROP, {
     landingPageViewRate: lpvRate,
-    threshold: 0.5,
+    threshold: lpvThreshold,
     totalClicks,
-    message: `Rata landing page (${(lpvRate * 100).toFixed(1)}%) sub 50% din ${totalClicks} click-uri — verifică viteza paginii sau redirecționările`,
+    message: `Rata landing page (${(lpvRate * 100).toFixed(1)}%) sub ${(lpvThreshold * 100).toFixed(0)}% din ${totalClicks} click-uri — verifică viteza paginii sau redirecționările`,
   })
 }
 
@@ -99,7 +111,8 @@ async function checkNoAddToCartAlert(
   const totalSpend = recentMetrics.reduce((sum, m) => sum + (m.spend ?? 0), 0)
   const totalAddToCart = recentMetrics.reduce((sum, m) => sum + (m.addToCart ?? 0), 0)
 
-  if (totalSpend < 200) return
+  const spendThreshold = config.noAddToCartSpendThreshold ?? 200
+  if (totalSpend < spendThreshold) return
   if (totalAddToCart > 0) return
 
   await createAlertIfNotExists(campaign.id, organizationId, AlertType.NO_ADD_TO_CART, {
@@ -115,19 +128,20 @@ async function checkHookRateAlert(
   organizationId: string
 ): Promise<void> {
   const recentMetrics = campaign.metrics.slice(0, 3)
-  if (recentMetrics.length < 1) return
 
   const totalPlays = recentMetrics.reduce((sum, m) => sum + (m.videoPlays ?? 0), 0)
   const totalP25 = recentMetrics.reduce((sum, m) => sum + (m.videoP25 ?? 0), 0)
 
-  if (totalPlays < 100) return
+  const minPlays = config.hookRateMinPlays ?? 100
+  if (totalPlays < minPlays) return
 
   const hookRate = totalP25 / totalPlays
-  if (hookRate >= 0.25) return
+  const hookThreshold = config.hookRateMinThreshold ?? 0.25
+  if (hookRate >= hookThreshold) return
 
   await createAlertIfNotExists(campaign.id, organizationId, AlertType.HOOK_RATE_LOW, {
     hookRate,
-    threshold: 0.25,
+    threshold: hookThreshold,
     videoPlays: totalPlays,
     message: `Hook rate scăzut (${(hookRate * 100).toFixed(1)}%) din ${totalPlays} vizionări — primele 3 secunde ale video-ului nu captează atenția`,
   })
