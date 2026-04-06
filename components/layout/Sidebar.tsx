@@ -18,6 +18,7 @@ import {
   Route,
   RotateCcw,
   X,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -72,7 +73,10 @@ const navSections: NavSection[] = [
   },
   {
     label: 'CONT',
-    items: [{ href: '/settings', label: 'Setări', icon: Settings }],
+    items: [
+      { href: '/settings', label: 'Setări', icon: Settings },
+      { href: '/guide', label: 'Manual de utilizare', icon: BookOpen },
+    ],
   },
 ]
 
