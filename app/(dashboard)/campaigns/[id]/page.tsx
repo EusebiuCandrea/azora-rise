@@ -8,6 +8,7 @@ import { CampaignStatusBadge } from '@/features/meta/components/CampaignStatusBa
 import { RoasBadge } from '@/features/meta/components/RoasBadge'
 import { CampaignMetricsChart } from '@/features/meta/components/CampaignMetricsChart'
 import { CampaignPauseButton } from '@/features/meta/components/CampaignPauseButton'
+import { CampaignProductLink } from '@/features/meta/components/CampaignProductLink'
 import { CampaignAIPanel } from '@/features/meta/components/CampaignAIPanel'
 import { AdCreativeTable } from '@/features/meta/components/AdCreativeTable'
 import { CampaignReportType } from '@prisma/client'
@@ -25,13 +26,14 @@ export default async function CampaignDetailPage({
 
   const yesterday = new Date(Date.now() - 86400000)
 
-  const [campaign, latestAIReport, scalingSuggestions, adMetrics, adSetData] = await Promise.all([
+  const [campaign, latestAIReport, scalingSuggestions, adMetrics, adSetData, allProducts] = await Promise.all([
     db.campaign.findFirst({
       where: { id, organizationId: orgId },
       include: {
         metrics: { where: { date: { lte: yesterday } }, orderBy: { date: 'desc' }, take: 30 },
         adSets: { orderBy: { createdAt: 'asc' } },
         alerts: { where: { isResolved: false }, orderBy: { triggeredAt: 'desc' } },
+        metaMappings: { include: { product: { select: { id: true, title: true, imageUrl: true } } } },
       },
     }),
     db.campaignAIReport.findFirst({
@@ -59,9 +61,16 @@ export default async function CampaignDetailPage({
       },
       orderBy: { createdAt: 'asc' },
     }),
+    db.product.findMany({
+      where: { organizationId: orgId },
+      select: { id: true, title: true, imageUrl: true },
+      orderBy: { title: 'asc' },
+    }),
   ])
 
   if (!campaign) notFound()
+
+  const linkedProduct = campaign.metaMappings?.[0]?.product ?? null
 
   const adSummaries = adMetrics.map((ad) => {
     const spend = ad.metrics.reduce((s, m) => s + m.spend, 0)
@@ -156,7 +165,14 @@ export default async function CampaignDetailPage({
           </div>
         </div>
 
-        {campaign.status === 'ACTIVE' && <CampaignPauseButton campaignId={id} />}
+        <div className="flex items-center gap-2">
+          <CampaignProductLink
+            campaignId={id}
+            linkedProduct={linkedProduct}
+            products={allProducts}
+          />
+          {campaign.status === 'ACTIVE' && <CampaignPauseButton campaignId={id} />}
+        </div>
       </div>
 
       {campaign.alerts.length > 0 && (
