@@ -174,7 +174,7 @@ async function getCampaignMetricsForAnalysis(campaignId: string) {
 
 export async function generateDailyDigest(organizationId: string): Promise<void> {
   const campaigns = await db.campaign.findMany({
-    where: { organizationId },
+    where: { organizationId, status: "ACTIVE" },
     include: {
       metrics: {
         where: { date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
