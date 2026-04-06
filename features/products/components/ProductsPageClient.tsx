@@ -77,11 +77,12 @@ export function ProductsPageClient({ products }: Props) {
   return (
     <>
       {/* Tab bar + filters */}
-      <div className="flex items-center border-b border-[#E7E5E4]">
-        <div className="flex items-center gap-6">
+      <div className="space-y-2">
+        {/* Tabs row */}
+        <div className="flex items-center border-b border-[#E7E5E4]">
           <button
             onClick={() => handleTab('all')}
-            className={`pb-3 text-sm -mb-px transition-colors ${
+            className={`pb-3 text-sm -mb-px transition-colors whitespace-nowrap ${
               tab === 'all'
                 ? 'font-semibold text-[#1C1917] border-b-2 border-[#D4AF37]'
                 : 'text-[#78716C] hover:text-[#1C1917]'
@@ -91,7 +92,7 @@ export function ProductsPageClient({ products }: Props) {
           </button>
           <button
             onClick={() => handleTab('drafts')}
-            className={`pb-3 text-sm -mb-px transition-colors flex items-center gap-1.5 ${
+            className={`pb-3 ml-6 text-sm -mb-px transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               tab === 'drafts'
                 ? 'font-semibold text-[#1C1917] border-b-2 border-[#D4AF37]'
                 : 'text-[#78716C] hover:text-[#1C1917]'
@@ -104,12 +105,13 @@ export function ProductsPageClient({ products }: Props) {
           </button>
         </div>
 
-        <div className="ml-auto pb-3 flex items-center gap-2">
+        {/* Filters row — full width on mobile, right-aligned on desktop */}
+        <div className="flex flex-wrap items-center gap-2">
           <input
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Caută produs..."
-            className="h-8 px-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-xs text-[#1C1917] placeholder:text-[#78716C] focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 w-44"
+            className="h-8 px-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-xs text-[#1C1917] placeholder:text-[#78716C] focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 flex-1 min-w-[140px] sm:flex-none sm:w-44"
           />
           <select
             value={statusFilter}
@@ -120,13 +122,6 @@ export function ProductsPageClient({ products }: Props) {
             <option value="active">Activ</option>
             <option value="inactive">Inactiv</option>
           </select>
-          <button
-            disabled
-            title="Disponibil în curând"
-            className="h-8 px-3 border border-[#E7E5E4] bg-white rounded-lg text-xs text-[#78716C] opacity-50 cursor-not-allowed"
-          >
-            Categorie ▾
-          </button>
         </div>
       </div>
 
@@ -171,7 +166,7 @@ export function ProductsPageClient({ products }: Props) {
 
       {/* Summary chips */}
       {products.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-4 shadow-sm">
             <p className="text-xs text-[#78716C] mb-1">Marjă medie</p>
             <p className="text-xl font-bold text-[#1C1917]">

@@ -23,9 +23,9 @@ const sections = [
 
 function Kv({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-3 py-2 border-b border-[#F5F5F4] last:border-0">
-      <span className="text-sm font-medium text-[#1C1917] w-48 flex-shrink-0">{label}</span>
-      <span className="text-sm text-[#44403C] flex-1">{children}</span>
+    <div className="py-3 px-4 border-b border-[#F5F5F4] last:border-0">
+      <span className="block text-xs font-semibold text-[#1C1917] uppercase tracking-wide mb-1">{label}</span>
+      <span className="block text-sm text-[#44403C] leading-relaxed">{children}</span>
     </div>
   )
 }
@@ -339,9 +339,34 @@ export function GuideClient() {
   const [active, setActive] = useState("dashboard")
 
   return (
-    <div className="flex gap-0 min-h-[calc(100vh-4rem)]">
-      {/* Left nav */}
-      <aside className="w-56 flex-shrink-0 border-r border-[#E7E5E4] bg-[#FAFAF9] py-6 px-3 sticky top-0 self-start">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
+
+      {/* Mobile: horizontal scrollable tab bar */}
+      <div className="lg:hidden border-b border-[#E7E5E4] bg-[#FAFAF9] overflow-x-auto">
+        <div className="flex gap-1 px-3 py-2 min-w-max">
+          {sections.map((s) => {
+            const Icon = s.icon
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActive(s.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors",
+                  active === s.id
+                    ? "bg-[#D4AF37] text-[#1C1917]"
+                    : "text-[#78716C] hover:bg-white hover:text-[#1C1917]"
+                )}
+              >
+                <Icon className="w-3 h-3 flex-shrink-0" strokeWidth={1.5} />
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Desktop: left sidebar */}
+      <aside className="hidden lg:block w-56 flex-shrink-0 border-r border-[#E7E5E4] bg-[#FAFAF9] py-6 px-3 sticky top-0 self-start max-h-screen overflow-y-auto">
         <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-widest text-[#78716C]/70">Secțiuni</p>
         <nav className="space-y-0.5">
           {sections.map((s) => {
@@ -369,7 +394,7 @@ export function GuideClient() {
       </aside>
 
       {/* Content */}
-      <main className="flex-1 px-8 py-8 max-w-3xl">
+      <main className="flex-1 px-4 sm:px-8 py-6 sm:py-8 min-w-0">
         <h2 className="text-xl font-bold text-[#1C1917] mb-1">
           {sections.find(s => s.id === active)?.label}
         </h2>

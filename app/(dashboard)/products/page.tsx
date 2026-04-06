@@ -38,11 +38,11 @@ export default async function ProductsPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SyncShopifyButton />
           <Link
             href="/videos/new"
-            className="flex items-center gap-2 px-4 h-9 bg-[#D4AF37] hover:bg-[#B8971F] text-[#1C1917] font-semibold text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 h-9 bg-[#D4AF37] hover:bg-[#B8971F] text-[#1C1917] font-semibold text-sm rounded-lg transition-colors whitespace-nowrap"
           >
             <Video className="w-3.5 h-3.5" strokeWidth={2} />
             Creare video nou

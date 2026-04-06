@@ -99,17 +99,17 @@ export function ProductListWithRoas({ products, actualRoas }: Props) {
   }
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm overflow-hidden">
-      <table className="w-full">
+    <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm overflow-x-auto">
+      <table className="w-full min-w-[600px]">
         <thead>
           <tr className="bg-[#F5F5F4] border-b border-[#E7E5E4]">
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Produs</th>
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Preț</th>
-            <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Cost configurat</th>
-            <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Marjă</th>
-            <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">
-              Break-Even ROAS
-              <span className="ml-1 text-[9px] font-normal normal-case text-[#C4C0BA]" title="ROAS minim calculat din costul produsului (Blueprint Formula: AOV / (AOV×(1−fees%) − COGS))">?</span>
+            <th className="hidden sm:table-cell px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Cost</th>
+            <th className="hidden sm:table-cell px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Marjă</th>
+            <th className="hidden md:table-cell px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">
+              ROAS BE
+              <span className="ml-1 text-[9px] font-normal normal-case text-[#C4C0BA]" title="ROAS minim calculat din costul produsului (Blueprint Formula)">?</span>
             </th>
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Status</th>
             <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#78716C] uppercase tracking-wide">Acțiuni</th>
@@ -120,7 +120,6 @@ export function ProductListWithRoas({ products, actualRoas }: Props) {
             <tr
               key={product.id}
               className="border-b border-[#E7E5E4] last:border-0 hover:bg-[#FAFAF9] transition-colors"
-              style={{ height: 56 }}
             >
               {/* Product */}
               <td className="px-4 py-3">
@@ -130,27 +129,27 @@ export function ProductListWithRoas({ products, actualRoas }: Props) {
                     <img
                       src={product.imageUrl}
                       alt={product.title}
-                      className="w-10 h-10 rounded-lg border border-[#E7E5E4] object-cover flex-shrink-0"
+                      className="w-9 h-9 rounded-lg border border-[#E7E5E4] object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg border border-[#E7E5E4] bg-[#F5F5F4] flex-shrink-0" />
+                    <div className="w-9 h-9 rounded-lg border border-[#E7E5E4] bg-[#F5F5F4] flex-shrink-0" />
                   )}
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1C1917] truncate max-w-[220px]">{product.title}</p>
-                    <p className="text-xs text-[#78716C] truncate">/{product.handle}</p>
+                    <p className="text-sm font-medium text-[#1C1917] truncate max-w-[160px] sm:max-w-[220px]">{product.title}</p>
+                    <p className="text-xs text-[#78716C] truncate max-w-[160px] sm:max-w-[220px]">/{product.handle}</p>
                   </div>
                 </div>
               </td>
 
               {/* Price */}
-              <td className="px-4 py-3 text-sm text-[#1C1917]">{product.price.toFixed(0)} RON</td>
+              <td className="px-4 py-3 text-sm text-[#1C1917] whitespace-nowrap">{product.price.toFixed(0)} RON</td>
 
               {/* Cost configured */}
-              <td className="px-4 py-3">
+              <td className="hidden sm:table-cell px-4 py-3">
                 {product.cost ? (
                   <span className="flex items-center gap-1.5 text-sm text-[#16A34A]">
                     <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    Configurat
+                    Da
                   </span>
                 ) : (
                   <span className="flex items-center gap-1.5 text-sm text-[#78716C]">
@@ -161,19 +160,19 @@ export function ProductListWithRoas({ products, actualRoas }: Props) {
               </td>
 
               {/* Margin */}
-              <td className="px-4 py-3">{marginBadge(product.price, product.cost)}</td>
+              <td className="hidden sm:table-cell px-4 py-3">{marginBadge(product.price, product.cost)}</td>
 
               {/* Required ROAS */}
-              <td className="px-4 py-3">
+              <td className="hidden md:table-cell px-4 py-3">
                 {requiredRoasBadge(product.price, product.cost, actualRoas)}
               </td>
 
               {/* Status */}
               <td className="px-4 py-3">
                 {product.status === 'active' ? (
-                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#DCFCE7] text-[#15803D]">Activ</span>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#DCFCE7] text-[#15803D] whitespace-nowrap">Activ</span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F5F5F4] text-[#78716C]">Inactiv</span>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F5F5F4] text-[#78716C] whitespace-nowrap">Inactiv</span>
                 )}
               </td>
 
@@ -183,14 +182,13 @@ export function ProductListWithRoas({ products, actualRoas }: Props) {
                   href={`/products/${product.id}`}
                   className="inline-flex items-center whitespace-nowrap rounded-lg border border-[#E7E5E4] px-2.5 py-1 text-xs text-[#78716C] transition-colors hover:bg-[#F5F5F4] hover:text-[#1C1917]"
                 >
-                  Editează costuri
+                  Editează
                 </Link>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
     </div>
   )
 }
