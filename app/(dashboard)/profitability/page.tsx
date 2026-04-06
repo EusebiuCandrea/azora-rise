@@ -167,6 +167,7 @@ export default async function ProfitabilityPage({
         recommendation: unitsSold === 0 ? 'DEAD_STOCK' as const : null,
         recommendationNote: null as string | null,
         hasCostData: false,
+        productMarginalRatio: null as number | null,
       }
     }
 
@@ -208,7 +209,7 @@ export default async function ProfitabilityPage({
       recommendation: rec.type,
       recommendationNote: rec.note,
       hasCostData: true,
-      productMarginalRatio: result.productMarginalRatio,
+      productMarginalRatio: result.productMarginalRatio ?? (cost.cogs > 0 ? product.price / cost.cogs : null),
     }
   })
 

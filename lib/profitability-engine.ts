@@ -176,8 +176,9 @@ export function calculateProductProfitability(
     : null
 
   // ── Break-Even KPIs (Blueprint Sheet 3: L11, L12, J6) ───────────────────────
+  // Blueprint C7 = "Average COGS incl. Shipping Cost" → include all variable costs per unit
   const avgPriceExVat = tax.isVatPayer ? avgSellingPrice / (1 + cost.vatRate) : avgSellingPrice
-  const cppBeCalc = avgPriceExVat * (1 - tax.shopifyFeeRate) - cost.cogs
+  const cppBeCalc = avgPriceExVat * (1 - tax.shopifyFeeRate) - (cost.cogs + cost.shippingCost + cost.packagingCost)
   const cppBe = cppBeCalc > 0 ? cppBeCalc : null
   const roasBe = cppBe !== null && cppBe > 0 ? avgSellingPrice / cppBe : null
   const halfBeCpp = cppBe !== null ? cppBe / 2 : null
