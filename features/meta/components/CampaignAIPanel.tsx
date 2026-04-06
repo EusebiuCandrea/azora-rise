@@ -81,7 +81,7 @@ export function CampaignAIPanel({ campaignId, initialReport, scalingSuggestions 
           <span className="text-sm font-semibold text-[#1C1917]">Analiză AI</span>
           {report?.generatedAt && (
             <span className="text-xs text-[#A8A29E]">
-              · {new Date(report.generatedAt).toLocaleString("ro-RO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })}
+              · {new Date(report.generatedAt).toLocaleString("ro-RO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", timeZone: "Europe/Bucharest" })}
             </span>
           )}
         </div>

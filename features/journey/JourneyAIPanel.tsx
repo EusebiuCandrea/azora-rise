@@ -19,7 +19,7 @@ interface Props {
 
 export function JourneyAIPanel({ report, onRegenerate, isRegenerating }: Props) {
   const generatedAt = report
-    ? new Date(report.generatedAt).toLocaleString('ro-RO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
+    ? new Date(report.generatedAt).toLocaleString('ro-RO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short', timeZone: 'Europe/Bucharest' })
     : null
 
   return (

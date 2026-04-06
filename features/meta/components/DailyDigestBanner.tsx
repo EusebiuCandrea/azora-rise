@@ -21,6 +21,7 @@ export function DailyDigestBanner({ summary, generatedAt, campaignCount }: Props
               minute: "2-digit",
               day: "2-digit",
               month: "short",
+              timeZone: "Europe/Bucharest",
             })}
             {" · "}{campaignCount} campanii analizate
           </span>
