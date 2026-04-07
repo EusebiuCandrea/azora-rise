@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, getCurrentOrgId } from "@/features/auth/helpers"
 import { db } from "@/lib/db"
-import { getYesterdayUTC } from "@/lib/utils"
 import { decrypt } from "@/lib/crypto"
 import { createCampaign } from "@/features/meta/client"
 
@@ -10,12 +9,13 @@ export async function GET(req: NextRequest) {
   const organizationId = await getCurrentOrgId(session)
   if (!organizationId) return NextResponse.json({ error: "No organization" }, { status: 403 })
 
-  const yesterday = getYesterdayUTC()
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
 
   const campaigns = await db.campaign.findMany({
     where: { organizationId },
     include: {
-      metrics: { where: { date: { lte: yesterday } }, orderBy: { date: "desc" }, take: 30 },
+      metrics: { where: { date: { lte: today } }, orderBy: { date: "desc" }, take: 30 },
       _count: { select: { adSets: true } },
     },
     orderBy: { updatedAt: "desc" },
