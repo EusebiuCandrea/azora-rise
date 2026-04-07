@@ -9,13 +9,13 @@ export async function POST(req: NextRequest) {
 
   const campaignsResult = await syncCampaignsFromMeta(organizationId)
 
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0]
+  const today = new Date().toISOString().split("T")[0]
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
 
   const [metricsResult, adSetMetricsResult, adMetricsResult] = await Promise.all([
-    syncDailyMetrics(organizationId, thirtyDaysAgo, yesterday),
-    syncAdSetMetrics(organizationId, thirtyDaysAgo, yesterday),
-    syncAdMetrics(organizationId, thirtyDaysAgo, yesterday),
+    syncDailyMetrics(organizationId, thirtyDaysAgo, today),
+    syncAdSetMetrics(organizationId, thirtyDaysAgo, today),
+    syncAdMetrics(organizationId, thirtyDaysAgo, today),
   ])
 
   return NextResponse.json({
