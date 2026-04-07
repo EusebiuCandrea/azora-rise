@@ -42,31 +42,29 @@ export function JourneyMetricsChart({ history = [], period = '30' }: Props) {
 
       <div className="relative">
         {/* Bars */}
-        <div className="h-48 flex items-end justify-between gap-0.5 px-1">
+        <div className="relative h-48 flex items-end justify-between gap-0.5 px-1">
           {history.map((point, i) => (
             <div
               key={i}
-              className="relative flex-1 flex flex-col items-center"
+              className="relative flex-1"
+              style={{ height: `${Math.max((point.overallConversion / max) * 100, 2)}%` }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
             >
+              {/* Bar */}
+              <div className="w-full h-full bg-[#D4AF37]/40 hover:bg-[#D4AF37]/70 transition-colors rounded-t-sm cursor-pointer" />
               {/* Tooltip */}
               {hovered === i && (
-                <div className="absolute bottom-full mb-2 z-10 bg-[#1C1917] text-white text-xs rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg pointer-events-none"
+                <div
+                  className="absolute bottom-full mb-2 z-10 bg-[#1C1917] text-white text-xs rounded-lg px-2.5 py-1.5 whitespace-nowrap shadow-lg pointer-events-none"
                   style={{ left: '50%', transform: 'translateX(-50%)' }}
                 >
                   <div className="font-semibold">{formatDate(point.date)}</div>
                   <div>{(point.overallConversion * 100).toFixed(2)}% conversie</div>
                   <div className="text-[#D4AF37]">{point.totalOrders} {point.totalOrders === 1 ? 'comandă' : 'comenzi'} · {point.totalProductViews ?? '—'} vizite</div>
-                  {/* Arrow */}
                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1C1917]" />
                 </div>
               )}
-              {/* Bar */}
-              <div
-                className="w-full bg-[#D4AF37]/40 hover:bg-[#D4AF37]/70 transition-colors rounded-t-sm cursor-pointer"
-                style={{ height: `${Math.max((point.overallConversion / max) * 100, 2)}%` }}
-              />
             </div>
           ))}
         </div>
