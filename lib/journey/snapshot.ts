@@ -166,8 +166,19 @@ export async function calculateJourneySnapshot(
   )
 
   // Campaign breakdown — join CampaignMetrics (impressions/clicks) + JourneySession (visits/orders)
+  // Include all statuses so paused/closed campaigns with sessions in the period are still shown
+  const campaignIdsWithSessions = new Set(
+    sessions.map((s) => s.campaignId).filter(Boolean) as string[]
+  )
   const campaignsWithMetrics = await db.campaign.findMany({
-    where: { organizationId: orgId, status: 'ACTIVE' },
+    where: {
+      organizationId: orgId,
+      OR: [
+        { status: 'ACTIVE' },
+        { metaCampaignId: { in: [...campaignIdsWithSessions] } },
+        { id: { in: [...campaignIdsWithSessions] } },
+      ],
+    },
     select: {
       id: true,
       metaCampaignId: true,
