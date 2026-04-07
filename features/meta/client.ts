@@ -140,6 +140,35 @@ async function metaFetch<T>(
   return data as T
 }
 
+async function metaFetchAll<T>(
+  endpoint: string,
+  accessToken: string,
+  params: Record<string, string> = {}
+): Promise<T[]> {
+  const results: T[] = []
+  let nextUrl: string | null = null
+
+  const firstPage = await metaFetch<{ data: T[]; paging?: { next?: string } }>(
+    endpoint,
+    accessToken,
+    params
+  )
+  results.push(...firstPage.data)
+  nextUrl = firstPage.paging?.next ?? null
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl)
+    const page = await response.json()
+    if (page.error) {
+      throw new Error(`Meta API Error ${page.error.code}: ${page.error.message}`)
+    }
+    results.push(...(page.data ?? []))
+    nextUrl = page.paging?.next ?? null
+  }
+
+  return results
+}
+
 // ─── Token validation ─────────────────────────────────────────────────────────
 
 export async function validateMetaToken(
@@ -172,16 +201,15 @@ export async function fetchCampaigns(
 ): Promise<MetaCampaign[]> {
   const fields =
     "id,name,status,objective,daily_budget,start_time,stop_time,created_time"
-  const data = await metaFetch<{ data: MetaCampaign[] }>(
+  return metaFetchAll<MetaCampaign>(
     `${adAccountId}/campaigns`,
     accessToken,
     {
       fields,
       limit: "500",
-      effective_status: '["ACTIVE","PAUSED","ARCHIVED"]',
+      effective_status: '["ACTIVE","PAUSED","ARCHIVED","DELETED"]',
     }
   )
-  return data.data
 }
 
 export async function createCampaign(
@@ -271,12 +299,11 @@ export async function fetchAdSets(
 ): Promise<MetaAdSet[]> {
   const fields =
     "id,campaign_id,name,status,daily_budget,targeting,bid_strategy,start_time,stop_time"
-  const data = await metaFetch<{ data: MetaAdSet[] }>(
+  return metaFetchAll<MetaAdSet>(
     `${campaignId}/adsets`,
     accessToken,
-    { fields, limit: "200", effective_status: '["ACTIVE","PAUSED","ARCHIVED"]' }
+    { fields, limit: "200", effective_status: '["ACTIVE","PAUSED","ARCHIVED","DELETED"]' }
   )
-  return data.data
 }
 
 // ─── Ads ──────────────────────────────────────────────────────────────────────
@@ -286,12 +313,11 @@ export async function fetchAds(
   adSetId: string
 ): Promise<MetaAd[]> {
   const fields = "id,adset_id,name,status,creative{thumbnail_url}"
-  const data = await metaFetch<{ data: MetaAd[] }>(`${adSetId}/ads`, accessToken, {
+  return metaFetchAll<MetaAd>(`${adSetId}/ads`, accessToken, {
     fields,
     limit: "200",
     effective_status: '["ACTIVE","PAUSED","ARCHIVED","DELETED"]',
   })
-  return data.data
 }
 
 // ─── Insights ─────────────────────────────────────────────────────────────────
@@ -331,7 +357,7 @@ export async function fetchCampaignInsights(
     : baseFields
   const fields = adLevelFields.join(",")
 
-  const data = await metaFetch<{ data: MetaInsights[] }>(
+  return metaFetchAll<MetaInsights>(
     `${adAccountId}/insights`,
     accessToken,
     {
@@ -343,8 +369,6 @@ export async function fetchCampaignInsights(
       limit: "2000",
     }
   )
-
-  return data.data
 }
 
 export async function fetchCampaignMetricsSummary(
