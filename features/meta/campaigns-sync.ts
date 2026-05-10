@@ -37,15 +37,20 @@ export async function syncCampaignsFromMeta(organizationId: string): Promise<{
 
     let adSetsSynced = 0
     let adsSynced = 0
+    const syncedMetaIds = new Set<string>()
 
     for (const mc of metaCampaigns) {
+      syncedMetaIds.add(mc.id)
+      // Use effective_status (actual delivery state) instead of status (what user set)
+      const derivedStatus = mapMetaStatus(mc.effective_status ?? mc.status)
+
       const campaign = await db.campaign.upsert({
         where: { metaCampaignId: mc.id },
         create: {
           organizationId,
           metaCampaignId: mc.id,
           name: mc.name,
-          status: mapMetaStatus(mc.status),
+          status: derivedStatus,
           budget: parseMetaBudget(mc.daily_budget),
           objective: mc.objective,
           startDate: mc.start_time ? new Date(mc.start_time) : null,
@@ -54,7 +59,7 @@ export async function syncCampaignsFromMeta(organizationId: string): Promise<{
         },
         update: {
           name: mc.name,
-          status: mapMetaStatus(mc.status),
+          status: derivedStatus,
           budget: parseMetaBudget(mc.daily_budget),
           startDate: mc.start_time ? new Date(mc.start_time) : null,
           endDate: mc.stop_time ? new Date(mc.stop_time) : null,
@@ -109,6 +114,18 @@ export async function syncCampaignsFromMeta(organizationId: string): Promise<{
           adsSynced++
         }
       }
+    }
+
+    // Mark campaigns no longer returned by Meta as COMPLETED (deleted/archived externally)
+    if (syncedMetaIds.size > 0) {
+      await db.campaign.updateMany({
+        where: {
+          organizationId,
+          metaCampaignId: { notIn: Array.from(syncedMetaIds) },
+          status: { in: ["ACTIVE", "PAUSED"] },
+        },
+        data: { status: "COMPLETED", lastSyncAt: new Date() },
+      })
     }
 
     return {
@@ -395,8 +412,10 @@ export async function syncAdMetrics(
 function mapMetaStatus(status: string): "ACTIVE" | "PAUSED" | "COMPLETED" | "DRAFT" {
   switch (status) {
     case "ACTIVE":
+    case "WITH_ISSUES":
       return "ACTIVE"
     case "PAUSED":
+    case "IN_PROCESS":
       return "PAUSED"
     case "ARCHIVED":
     case "DELETED":

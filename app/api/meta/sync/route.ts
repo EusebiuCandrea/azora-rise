@@ -9,6 +9,10 @@ export async function POST(req: NextRequest) {
 
   const campaignsResult = await syncCampaignsFromMeta(organizationId)
 
+  if (campaignsResult.error) {
+    return NextResponse.json({ error: campaignsResult.error }, { status: 502 })
+  }
+
   const today = new Date().toISOString().split("T")[0]
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
 

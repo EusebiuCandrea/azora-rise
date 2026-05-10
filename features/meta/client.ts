@@ -7,6 +7,7 @@ export interface MetaCampaign {
   id: string
   name: string
   status: "ACTIVE" | "PAUSED" | "DELETED" | "ARCHIVED"
+  effective_status: "ACTIVE" | "PAUSED" | "DELETED" | "ARCHIVED" | "IN_PROCESS" | "WITH_ISSUES"
   objective: string
   daily_budget?: string
   start_time?: string
@@ -200,7 +201,7 @@ export async function fetchCampaigns(
   adAccountId: string
 ): Promise<MetaCampaign[]> {
   const fields =
-    "id,name,status,objective,daily_budget,start_time,stop_time,created_time"
+    "id,name,status,effective_status,objective,daily_budget,start_time,stop_time,created_time"
   return metaFetchAll<MetaCampaign>(
     `${adAccountId}/campaigns`,
     accessToken,
