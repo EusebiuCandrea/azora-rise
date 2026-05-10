@@ -2,7 +2,7 @@
 
 import { WizardState, WizardTemplate } from '../VideoWizard'
 import { cn } from '@/lib/utils'
-import { Film, SplitSquareHorizontal, Images, Bot, LayoutTemplate } from 'lucide-react'
+import { Film, SplitSquareHorizontal, Images, Bot, LayoutTemplate, Captions } from 'lucide-react'
 import Link from 'next/link'
 
 const TEMPLATES: Array<{ id: WizardTemplate; label: string; description: string; icon: React.ElementType; recommended?: boolean }> = [
@@ -24,6 +24,12 @@ const TEMPLATES: Array<{ id: WizardTemplate; label: string; description: string;
     label: 'Slideshow',
     description: 'Prezentare imagini cu muzică. Ideal pentru produse vizuale.',
     icon: Images,
+  },
+  {
+    id: 'CaptionVideo',
+    label: 'Caption Video',
+    description: 'Adaugă subtitrare cu cuvântul activ evidențiat în mov. Ideal pentru videouri cu voce.',
+    icon: Captions,
   },
 ]
 

@@ -13,7 +13,7 @@ import { StepReview } from './wizard/StepReview'
 const STEPS = ['Produs', 'Template', 'Configurare', 'Lansare'] as const
 type Step = 0 | 1 | 2 | 3
 
-export type WizardTemplate = 'ProductShowcase' | 'BeforeAfter' | 'Slideshow'
+export type WizardTemplate = 'ProductShowcase' | 'BeforeAfter' | 'Slideshow' | 'CaptionVideo'
 export type WizardFormat = '9x16' | '4x5' | '1x1' | '16x9'
 
 export interface WizardState {
@@ -29,6 +29,11 @@ export interface WizardState {
   subtitles: Array<{ from: number; to: number; line1: string; line2: string }>
   price: string
   tagline: string
+  // CaptionVideo
+  captionAssetId: string
+  captionWords: Array<{ word: string; start: number; end: number }>
+  captionFormat: WizardFormat
+  captionOffset: number  // seconds — negative = captions appear earlier
 }
 
 const INITIAL_STATE: WizardState = {
@@ -44,6 +49,10 @@ const INITIAL_STATE: WizardState = {
   subtitles: [],
   price: '',
   tagline: '',
+  captionAssetId: '',
+  captionWords: [],
+  captionFormat: '9x16',
+  captionOffset: -0.3,
 }
 
 interface VideoWizardProps {
@@ -69,6 +78,7 @@ export function VideoWizard({ products, assets }: VideoWizardProps) {
       if (state.template === 'ProductShowcase') return state.clips.length >= 1
       if (state.template === 'BeforeAfter') return !!state.beforeClip && !!state.afterClip
       if (state.template === 'Slideshow') return state.images.length >= 3
+      if (state.template === 'CaptionVideo') return !!state.captionAssetId && state.captionWords.length > 0
       return false
     }
     return true
@@ -78,6 +88,41 @@ export function VideoWizard({ products, assets }: VideoWizardProps) {
     if (!state.template || !state.productId) return
     setSubmitting(true)
     setError(null)
+
+    // CaptionVideo renders in-place via dedicated route
+    if (state.template === 'CaptionVideo') {
+      try {
+        const res = await fetch('/api/videos/render-captions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            assetId: state.captionAssetId,
+            words: state.captionWords,
+            outputFormat: state.captionFormat,
+            offset: state.captionOffset,
+          }),
+        })
+
+        if (!res.ok) {
+          const { error: msg } = await res.json()
+          throw new Error(msg ?? 'Eroare la render subtitrare')
+        }
+
+        const { downloadUrl, filename } = await res.json()
+
+        // Trigger browser download
+        const a = document.createElement('a')
+        a.href = downloadUrl
+        a.download = filename
+        a.click()
+
+        router.push('/videos/library')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Eroare necunoscută')
+        setSubmitting(false)
+      }
+      return
+    }
 
     const params: Record<string, unknown> = {
       productName: state.productName,
@@ -168,7 +213,7 @@ export function VideoWizard({ products, assets }: VideoWizardProps) {
         {step === 0 && <StepProduct products={products} state={state} update={update} />}
         {step === 1 && <StepTemplate state={state} update={update} />}
         {step === 2 && <StepConfigure assets={assets} state={state} update={update} />}
-        {step === 3 && <StepReview state={state} />}
+        {step === 3 && <StepReview state={state} onEditCaptions={state.template === 'CaptionVideo' ? () => setStep(2) : undefined} onOffsetChange={state.template === 'CaptionVideo' ? (v) => update({ captionOffset: v }) : undefined} />}
       </div>
 
       {error && (
@@ -202,10 +247,10 @@ export function VideoWizard({ products, assets }: VideoWizardProps) {
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Se lansează...
+                {state.template === 'CaptionVideo' ? 'Se randează...' : 'Se lansează...'}
               </>
             ) : (
-              'Salvează configurația'
+              state.template === 'CaptionVideo' ? 'Randează și descarcă' : 'Salvează configurația'
             )}
           </button>
         )}

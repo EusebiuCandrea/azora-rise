@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { VideoAsset } from '@prisma/client'
-import { WizardState } from '../VideoWizard'
+import { WizardState, WizardFormat } from '../VideoWizard'
 import { cn } from '@/lib/utils'
-import { CheckCircle2, Circle, Film, Image as ImageIcon, Music, ExternalLink } from 'lucide-react'
+import { CheckCircle2, Circle, Film, Image as ImageIcon, Music, ExternalLink, Loader2, Captions } from 'lucide-react'
+import { CaptionEditor } from './CaptionEditor'
 
 interface Props {
   assets: VideoAsset[]
@@ -85,6 +87,132 @@ function AssetPicker({
   )
 }
 
+const FORMAT_OPTIONS: Array<{ value: WizardFormat; label: string; desc: string }> = [
+  { value: '9x16', label: '9:16', desc: 'TikTok / Reels / Shorts' },
+  { value: '4x5',  label: '4:5',  desc: 'Feed Facebook/Instagram' },
+  { value: '1x1',  label: '1:1',  desc: 'Feed pătrat' },
+  { value: '16x9', label: '16:9', desc: 'YouTube / Desktop' },
+]
+
+function CaptionVideoSection({ assets, state, update }: Props) {
+  const [transcribing, setTranscribing] = useState(false)
+  const [transcribeError, setTranscribeError] = useState<string | null>(null)
+
+  const videos = assets.filter((a) => a.assetType === 'VIDEO')
+
+  async function handleTranscribe(assetId: string) {
+    setTranscribing(true)
+    setTranscribeError(null)
+    update({ captionAssetId: assetId, captionWords: [] })
+
+    try {
+      const res = await fetch('/api/videos/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Eroare la transcriere')
+      update({ captionWords: data.words })
+    } catch (err) {
+      setTranscribeError(err instanceof Error ? err.message : 'Eroare necunoscută')
+    } finally {
+      setTranscribing(false)
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Video picker */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-[#1C1917]">Video sursă</label>
+        {videos.length === 0 ? (
+          <div className="flex items-center gap-2 p-3 border border-dashed border-[#E7E5E4] rounded-lg bg-[#FAFAF9]">
+            <Film className="w-4 h-4 text-[#C4C0BA] flex-shrink-0" strokeWidth={1.5} />
+            <p className="text-xs text-[#78716C]">
+              Niciun video în bibliotecă.{' '}
+              <a href="/videos/library" className="text-[#D4AF37] hover:underline inline-flex items-center gap-0.5" target="_blank">
+                Încarcă <ExternalLink className="w-3 h-3" />
+              </a>
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {videos.map((asset) => {
+              const sel = state.captionAssetId === asset.id
+              return (
+                <button
+                  key={asset.id}
+                  onClick={() => !transcribing && handleTranscribe(asset.id)}
+                  disabled={transcribing}
+                  className={cn(
+                    'relative flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors',
+                    sel
+                      ? 'border-[#7C3AED] bg-[#F5F3FF]'
+                      : 'border-[#E7E5E4] bg-white hover:border-[#7C3AED]/40 hover:bg-[#FAFAF9]',
+                    transcribing && 'opacity-50 cursor-not-allowed'
+                  )}
+                >
+                  {sel ? (
+                    <CheckCircle2 className="w-4 h-4 text-[#7C3AED] flex-shrink-0" strokeWidth={1.5} />
+                  ) : (
+                    <Circle className="w-4 h-4 text-[#C4C0BA] flex-shrink-0" strokeWidth={1.5} />
+                  )}
+                  <span className="truncate text-[#1C1917] font-medium">{asset.filename}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Transcribing state */}
+      {transcribing && (
+        <div className="flex items-center gap-2.5 px-4 py-3 bg-[#F5F3FF] border border-[#DDD6FE] rounded-lg">
+          <Loader2 className="w-4 h-4 text-[#7C3AED] animate-spin flex-shrink-0" />
+          <p className="text-sm text-[#5B21B6]">Se extrage vocea din video cu AI...</p>
+        </div>
+      )}
+
+      {transcribeError && (
+        <p className="text-sm bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] px-3 py-2 rounded-lg">
+          {transcribeError}
+        </p>
+      )}
+
+      {/* Caption editor */}
+      {state.captionWords.length > 0 && !transcribing && (
+        <CaptionEditor
+          words={state.captionWords}
+          onChange={(words) => update({ captionWords: words })}
+        />
+      )}
+
+      {/* Output format */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-[#1C1917]">Format output</label>
+        <div className="flex flex-wrap gap-2">
+          {FORMAT_OPTIONS.map(({ value, label, desc }) => (
+            <button
+              key={value}
+              onClick={() => update({ captionFormat: value })}
+              className={cn(
+                'px-3 py-2 rounded-lg border text-xs font-medium transition-colors',
+                state.captionFormat === value
+                  ? 'border-[#7C3AED] bg-[#F5F3FF] text-[#5B21B6]'
+                  : 'border-[#E7E5E4] bg-white text-[#78716C] hover:border-[#7C3AED]/40'
+              )}
+            >
+              <span className="font-semibold">{label}</span>
+              <span className="ml-1.5 font-normal text-[#78716C]">{desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function StepConfigure({ assets, state, update }: Props) {
   function toggleClip(key: string) {
     const clips = state.clips.includes(key)
@@ -98,6 +226,21 @@ export function StepConfigure({ assets, state, update }: Props) {
       ? state.images.filter((i) => i !== key)
       : [...state.images, key]
     update({ images })
+  }
+
+  // CaptionVideo has its own dedicated configure section
+  if (state.template === 'CaptionVideo') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-bold text-[#1C1917]">Configurează Caption Video</h2>
+          <p className="text-sm text-[#78716C] mt-1">
+            Selectează video-ul, extrage vocea automat cu AI și editează subtitrarea.
+          </p>
+        </div>
+        <CaptionVideoSection assets={assets} state={state} update={update} />
+      </div>
+    )
   }
 
   return (

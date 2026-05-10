@@ -8,7 +8,7 @@ const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET!
 
 const createVideoSchema = z.object({
   productId: z.string().min(1),
-  template: z.enum(['ProductShowcase', 'BeforeAfter', 'Slideshow']),
+  template: z.enum(['ProductShowcase', 'BeforeAfter', 'Slideshow', 'CaptionVideo']),
   formats: z.array(z.enum(['9x16', '4x5', '1x1', '16x9'])).min(1),
   params: z.record(z.string(), z.unknown()),
 })
