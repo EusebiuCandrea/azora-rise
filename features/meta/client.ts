@@ -201,7 +201,7 @@ export async function fetchCampaigns(
   adAccountId: string
 ): Promise<MetaCampaign[]> {
   const fields =
-    "id,name,status,effective_status,objective,daily_budget,start_time,stop_time,created_time"
+    "id,name,status,objective,daily_budget,start_time,stop_time,created_time"
   return metaFetchAll<MetaCampaign>(
     `${adAccountId}/campaigns`,
     accessToken,
