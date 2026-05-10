@@ -205,11 +205,7 @@ export async function fetchCampaigns(
   return metaFetchAll<MetaCampaign>(
     `${adAccountId}/campaigns`,
     accessToken,
-    {
-      fields,
-      limit: "500",
-      effective_status: '["ACTIVE","PAUSED","ARCHIVED","DELETED"]',
-    }
+    { fields, limit: "500" }
   )
 }
 
@@ -303,7 +299,7 @@ export async function fetchAdSets(
   return metaFetchAll<MetaAdSet>(
     `${campaignId}/adsets`,
     accessToken,
-    { fields, limit: "200", effective_status: '["ACTIVE","PAUSED","ARCHIVED","DELETED"]' }
+    { fields, limit: "200" }
   )
 }
 
@@ -317,7 +313,6 @@ export async function fetchAds(
   return metaFetchAll<MetaAd>(`${adSetId}/ads`, accessToken, {
     fields,
     limit: "200",
-    effective_status: '["ACTIVE","PAUSED","ARCHIVED","DELETED"]',
   })
 }
 
