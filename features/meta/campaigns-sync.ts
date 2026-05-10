@@ -51,7 +51,7 @@ export async function syncCampaignsFromMeta(organizationId: string): Promise<{
           metaCampaignId: mc.id,
           name: mc.name,
           status: derivedStatus,
-          budget: parseMetaBudget(mc.daily_budget),
+          budget: parseMetaBudget(mc.daily_budget ?? mc.lifetime_budget),
           objective: mc.objective,
           startDate: mc.start_time ? new Date(mc.start_time) : null,
           endDate: mc.stop_time ? new Date(mc.stop_time) : null,
@@ -60,7 +60,7 @@ export async function syncCampaignsFromMeta(organizationId: string): Promise<{
         update: {
           name: mc.name,
           status: derivedStatus,
-          budget: parseMetaBudget(mc.daily_budget),
+          budget: parseMetaBudget(mc.daily_budget ?? mc.lifetime_budget),
           startDate: mc.start_time ? new Date(mc.start_time) : null,
           endDate: mc.stop_time ? new Date(mc.stop_time) : null,
           lastSyncAt: new Date(),
