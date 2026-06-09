@@ -53,6 +53,7 @@ export function createShopifyClient(shopDomain: string, accessTokenEncrypted: st
       pageInfo?: string
       sinceId?: string
       processedAtMin?: string
+      updatedAtMin?: string
       status?: string
       financialStatus?: string
       limit?: number
@@ -61,6 +62,7 @@ export function createShopifyClient(shopDomain: string, accessTokenEncrypted: st
         pageInfo,
         sinceId,
         processedAtMin,
+        updatedAtMin,
         status = 'any',
         financialStatus,
         limit = 250,
@@ -94,6 +96,7 @@ export function createShopifyClient(shopDomain: string, accessTokenEncrypted: st
         if (financialStatus) params.set('financial_status', financialStatus)
         if (sinceId) params.set('since_id', sinceId)
         if (processedAtMin) params.set('processed_at_min', processedAtMin)
+        if (updatedAtMin) params.set('updated_at_min', updatedAtMin)
       }
 
       const res = await fetch(`${baseUrl}/orders.json?${params}`, {

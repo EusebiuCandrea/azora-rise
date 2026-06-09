@@ -41,20 +41,19 @@ export async function syncOrders(orgId: string): Promise<ShopifyOrdersSyncResult
     const client = createShopifyClient(connection.shopDomain, connection.accessTokenEncrypted)
 
     // 4. Determină punctul de start pentru sync
-    const org = await db.organization.findUnique({
-      where: { id: orgId },
-      select: { ordersSyncCursor: true },
-    })
-
-    const isInitialSync = !org?.ordersSyncCursor
+    // Sync incremental: updated_at_min = ultima sincronizare - 5 min buffer
+    // Acest approach preia și comenzile cu status schimbat (ex: voided, cancelled)
+    // nu doar comenzile noi (since_id preia doar comenzi cu ID > cursor).
+    const isInitialSync = !connection.ordersLastSyncedAt
     const processedAtMin = isInitialSync
       ? new Date(Date.now() - INITIAL_SYNC_DAYS * 24 * 60 * 60 * 1000).toISOString()
       : undefined
-    const sinceId = org?.ordersSyncCursor ?? undefined
+    const updatedAtMin = !isInitialSync && connection.ordersLastSyncedAt
+      ? new Date(connection.ordersLastSyncedAt.getTime() - 5 * 60 * 1000).toISOString()
+      : undefined
 
     let pageInfo: string | undefined = undefined
     let isFirstPage = true
-    let latestShopifyOrderId: string | null = null
 
     // 5. Cursor pagination loop
     do {
@@ -63,8 +62,8 @@ export async function syncOrders(orgId: string): Promise<ShopifyOrdersSyncResult
       try {
         ordersResult = await client.getOrders({
           pageInfo,
-          sinceId: isFirstPage ? sinceId : undefined,
           processedAtMin: isFirstPage ? processedAtMin : undefined,
+          updatedAtMin: isFirstPage ? updatedAtMin : undefined,
           status: 'any',
           limit: 250,
         })
@@ -74,8 +73,8 @@ export async function syncOrders(orgId: string): Promise<ShopifyOrdersSyncResult
           await sleep(1000)
           ordersResult = await client.getOrders({
             pageInfo,
-            sinceId: isFirstPage ? sinceId : undefined,
             processedAtMin: isFirstPage ? processedAtMin : undefined,
+            updatedAtMin: isFirstPage ? updatedAtMin : undefined,
             status: 'any',
             limit: 250,
           })
@@ -102,12 +101,6 @@ export async function syncOrders(orgId: string): Promise<ShopifyOrdersSyncResult
           } else {
             result.skipped++
           }
-
-          // Reține cel mai mare Shopify ID pentru cursor incremental
-          const shopifyIdNum = order.id
-          if (!latestShopifyOrderId || shopifyIdNum > parseInt(latestShopifyOrderId)) {
-            latestShopifyOrderId = String(shopifyIdNum)
-          }
         } catch (err) {
           result.errors.push(`Order ${order.order_number}: ${String(err)}`)
         }
@@ -121,15 +114,7 @@ export async function syncOrders(orgId: string): Promise<ShopifyOrdersSyncResult
       }
     } while (pageInfo)
 
-    // 8. Salvează cursorul pentru sync incremental ulterior
-    if (latestShopifyOrderId) {
-      await db.organization.update({
-        where: { id: orgId },
-        data: { ordersSyncCursor: latestShopifyOrderId },
-      })
-    }
-
-    // 9. Backfill productId pe toate orderItems cu productId null
+    // 8. Backfill productId pe toate orderItems cu productId null
     const nullItems = await db.orderItem.findMany({
       where: {
         organizationId: orgId,
