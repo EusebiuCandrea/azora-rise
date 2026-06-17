@@ -72,10 +72,10 @@ export async function GET(request: NextRequest) {
   if (order) {
     const shopifyData = order.shopifyData as Record<string, unknown> | null
     const customerName =
-      (shopifyData?.customer as Record<string, unknown> | null)?.displayName as string
-      ?? (shopifyData?.billingAddress as Record<string, unknown> | null)?.name as string
-      ?? order.email
-      ?? 'Client'
+      ((shopifyData?.customer as Record<string, unknown> | null)?.displayName as string)?.trim() ||
+      ((shopifyData?.billingAddress as Record<string, unknown> | null)?.name as string)?.trim() ||
+      order.email ||
+      'Client'
 
     return NextResponse.json({
       customerName,
@@ -165,13 +165,15 @@ async function fetchOrderFromShopify(
   const o = data.orders?.[0]
   if (!o) return null
 
+  const nameParts = [o.customer?.first_name, o.customer?.last_name]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
   const customerName =
-    (o.customer?.first_name || o.customer?.last_name
-      ? `${o.customer.first_name ?? ''} ${o.customer.last_name ?? ''}`.trim()
-      : null)
-    ?? o.billing_address?.name
-    ?? o.email
-    ?? 'Client'
+    nameParts ||
+    o.billing_address?.name?.trim() ||
+    o.email ||
+    'Client'
 
   return {
     customerName,
