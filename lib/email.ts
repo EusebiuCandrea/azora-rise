@@ -186,14 +186,27 @@ export async function sendAdminCancellationNotification(data: CancellationEmailD
 export async function sendCustomerCancellationConfirmation(data: CancellationEmailData): Promise<void> {
   if (!data.customerEmail) return
 
+  const greeting = data.customerName && data.customerName !== 'Client'
+    ? `Bună ${escapeHtml(data.customerName)},`
+    : 'Bună,'
+
+  const bodyHtml = data.cancellationEligible
+    ? `
+      <p>Cererea ta de anulare pentru comanda <strong>${escapeHtml(data.orderNumber)}</strong> a fost înregistrată cu succes.</p>
+      <p>Comanda ta va fi anulată de echipa noastră în cel mai scurt timp. Vei fi contactat în <strong>1-2 zile lucrătoare</strong> cu confirmare și detalii despre rambursarea sumei achitate.</p>
+    `
+    : `
+      <p>Cererea ta de anulare pentru comanda <strong>${escapeHtml(data.orderNumber)}</strong> a fost înregistrată.</p>
+      <p>Din păcate, comanda a fost deja expediată și nu mai poate fi anulată în această etapă. Echipa noastră va analiza cererea ta și te va contacta în <strong>1-2 zile lucrătoare</strong> pentru a discuta opțiunile disponibile (inclusiv retur după primirea coletului).</p>
+    `
+
   const html = `
-    <p>Bună ${escapeHtml(data.customerName)},</p>
-    <p>Cererea ta de anulare pentru comanda <strong>${escapeHtml(data.orderNumber)}</strong> a fost înregistrată cu succes.</p>
-    <p>Comanda ta va fi anulată și vei fi informat prin email cu privire la rambursarea sumei achitate.</p>
-    <p style="margin-top:16px;">Dacă ai întrebări, ne poți contacta la <a href="mailto:contact@azora.ro">contact@azora.ro</a>.</p>
+    <p>${greeting}</p>
+    ${bodyHtml}
+    <p style="margin-top:16px;">Dacă ai întrebări urgente, ne poți contacta la <a href="mailto:contact@azora.ro">contact@azora.ro</a> sau <a href="tel:+40745541700">+40745 541 700</a>.</p>
     <p>Mulțumim că ai ales AZORA!</p>
     <p style="color:#999;font-size:12px;">Echipa AZORA</p>
-    <p style="color:#999;font-size:12px;margin-top:16px;">Acesta este un email automat. Te rugăm să nu răspunzi la acest mesaj. Pentru orice întrebare, ne poți contacta la <a href="mailto:contact@azora.ro" style="color:#999;">contact@azora.ro</a>.</p>
+    <p style="color:#999;font-size:12px;margin-top:16px;">Acesta este un email automat. Te rugăm să nu răspunzi la acest mesaj.</p>
   `
 
   const resend = getResend()

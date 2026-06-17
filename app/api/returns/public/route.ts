@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       cancellationEligible: data.cancellationEligible ?? false,
     }
     void sendAdminCancellationNotification(cancellationData)
-    if (customerEmail && data.cancellationEligible) {
+    if (customerEmail) {
       void sendCustomerCancellationConfirmation(cancellationData)
     }
   } else {

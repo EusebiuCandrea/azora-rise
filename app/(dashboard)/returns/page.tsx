@@ -54,7 +54,7 @@ export default async function ReturnsPage({
   }
 
   const statCards = [
-    { label: 'Total Retururi', value: totalCount, accent: '#D4AF37', sub: 'toate retururile' },
+    { label: 'Total Cereri', value: totalCount, accent: '#D4AF37', sub: 'retururi & anulări' },
     { label: 'Noi', value: newCount, accent: '#3B82F6', sub: 'necesită acțiune' },
     { label: 'În Recepționare', value: receivedCount, accent: '#F59E0B', sub: 'verificare în depozit' },
     { label: 'Finalizate', value: completedCount, accent: '#16A34A', sub: 'închise cu succes' },
