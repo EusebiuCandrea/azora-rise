@@ -128,6 +128,89 @@ export async function sendCustomerStatusUpdate(
   }
 }
 
+interface CancellationEmailData {
+  returnId: string
+  orderNumber: string
+  customerName: string
+  customerEmail?: string
+  cancellationEligible: boolean
+}
+
+export async function sendAdminCancellationNotification(data: CancellationEmailData): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL
+  if (!adminEmail) {
+    console.error('[email] ADMIN_EMAIL env var is not set — admin notification skipped')
+    return
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://rise.azora.ro'
+  const returnUrl = `${appUrl}/returns/${escapeHtml(data.returnId)}`
+
+  const eligibilityRow = data.cancellationEligible
+    ? `<tr><td><strong>Eligibilitate:</strong></td><td style="color:#16A34A;font-weight:700;">✓ Comanda poate fi anulată</td></tr>`
+    : `<tr><td><strong>Eligibilitate:</strong></td><td style="color:#DC2626;font-weight:700;">✕ Comanda deja expediată — anulare imposibilă</td></tr>`
+
+  const html = `
+    <h2>Cerere anulare comandă</h2>
+    <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+      <tr><td><strong>Număr comandă:</strong></td><td>${escapeHtml(data.orderNumber)}</td></tr>
+      <tr><td><strong>Client:</strong></td><td>${escapeHtml(data.customerName)}</td></tr>
+      ${data.customerEmail ? `<tr><td><strong>Email client:</strong></td><td>${escapeHtml(data.customerEmail)}</td></tr>` : ''}
+      ${eligibilityRow}
+    </table>
+    <p style="margin-top:16px;">
+      <a href="${returnUrl}" style="background:#000;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">
+        Vezi cererea în Rise
+      </a>
+    </p>
+  `
+
+  const resend = getResend()
+  if (!resend) {
+    console.error('[email] RESEND_API_KEY env var is not set — email skipped')
+    return
+  }
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: adminEmail,
+      subject: `Anulare comandă ${data.orderNumber} — ${data.customerName}${data.cancellationEligible ? '' : ' [DEJA EXPEDIATĂ]'}`,
+      html,
+    })
+  } catch (error) {
+    console.error('[email] sendAdminCancellationNotification failed:', error)
+  }
+}
+
+export async function sendCustomerCancellationConfirmation(data: CancellationEmailData): Promise<void> {
+  if (!data.customerEmail) return
+
+  const html = `
+    <p>Bună ${escapeHtml(data.customerName)},</p>
+    <p>Cererea ta de anulare pentru comanda <strong>${escapeHtml(data.orderNumber)}</strong> a fost înregistrată cu succes.</p>
+    <p>Comanda ta va fi anulată și vei fi informat prin email cu privire la rambursarea sumei achitate.</p>
+    <p style="margin-top:16px;">Dacă ai întrebări, ne poți contacta la <a href="mailto:contact@azora.ro">contact@azora.ro</a>.</p>
+    <p>Mulțumim că ai ales AZORA!</p>
+    <p style="color:#999;font-size:12px;">Echipa AZORA</p>
+    <p style="color:#999;font-size:12px;margin-top:16px;">Acesta este un email automat. Te rugăm să nu răspunzi la acest mesaj. Pentru orice întrebare, ne poți contacta la <a href="mailto:contact@azora.ro" style="color:#999;">contact@azora.ro</a>.</p>
+  `
+
+  const resend = getResend()
+  if (!resend) return
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: data.customerEmail,
+      subject: `Cererea de anulare ${escapeHtml(data.orderNumber)} a fost înregistrată — AZORA`,
+      html,
+    })
+  } catch (error) {
+    console.error('[email] sendCustomerCancellationConfirmation failed:', error)
+  }
+}
+
 export async function sendCustomerReturnConfirmation(data: ReturnEmailData): Promise<void> {
   if (!data.customerEmail) return
 

@@ -20,6 +20,7 @@ export interface ReturnRecord {
   ibanHolder: string | null
   status: ReturnStatus
   adminNotes: string | null
+  cancellationEligible: boolean | null
   createdAt: string | Date
   updatedAt: string | Date
   order?: { id: string; orderNumber: number } | null

@@ -90,7 +90,7 @@ export function ReturnsTable({ returns }: Props) {
                     {r.variantTitle && <div className="text-xs text-[#78716C] truncate">{r.variantTitle}</div>}
                   </td>
                   <td className="px-4 py-3 text-sm text-[#78716C]">
-                    {r.returnType === 'REFUND' ? 'Ramburs' : 'Schimb'}
+                    {r.returnType === 'REFUND' ? 'Ramburs' : r.returnType === 'EXCHANGE' ? 'Schimb' : 'Anulare'}
                   </td>
                   <td className="px-4 py-3">
                     <ReturnStatusBadge status={r.status} />

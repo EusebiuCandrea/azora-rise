@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
     customerName,
     customerEmail: order.email,
     shopifyOrderId: order.shopifyOrderId,
+    fulfillmentStatus: order.fulfillmentStatus,
     orderItems: order.items.map((item) => ({
       shopifyProductId: item.shopifyProductId,
       productId: item.productId,

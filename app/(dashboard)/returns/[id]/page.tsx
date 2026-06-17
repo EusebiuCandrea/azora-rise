@@ -102,35 +102,56 @@ export default async function ReturnDetailPage({
                   <p className="text-xs text-[#78716C] mt-0.5">{returnRecord.customerEmail}</p>
                 )}
               </div>
-              <div className="bg-[#FAFAF9] rounded-xl p-4">
-                <p className="text-xs uppercase tracking-wide text-[#78716C] font-semibold mb-2">
-                  Produs returnat
-                </p>
-                <p className="text-sm font-semibold text-[#1C1917]">{returnRecord.productTitle}</p>
-                {returnRecord.variantTitle && (
-                  <p className="text-xs text-[#78716C] mt-0.5">{returnRecord.variantTitle}</p>
-                )}
-                {returnRecord.sku && (
-                  <p className="text-xs text-[#78716C]">SKU: {returnRecord.sku}</p>
-                )}
-              </div>
+              {returnRecord.returnType === 'CANCELLATION' ? (
+                <div className="bg-[#FAFAF9] rounded-xl p-4">
+                  <p className="text-xs uppercase tracking-wide text-[#78716C] font-semibold mb-2">
+                    Eligibilitate anulare
+                  </p>
+                  {returnRecord.cancellationEligible === true && (
+                    <p className="text-sm font-semibold" style={{ color: '#16A34A' }}>✓ Comanda poate fi anulată</p>
+                  )}
+                  {returnRecord.cancellationEligible === false && (
+                    <p className="text-sm font-semibold" style={{ color: '#DC2626' }}>✕ Comanda deja expediată</p>
+                  )}
+                  {returnRecord.cancellationEligible === null && (
+                    <p className="text-sm text-[#78716C]">—</p>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-[#FAFAF9] rounded-xl p-4">
+                  <p className="text-xs uppercase tracking-wide text-[#78716C] font-semibold mb-2">
+                    Produs returnat
+                  </p>
+                  <p className="text-sm font-semibold text-[#1C1917]">{returnRecord.productTitle}</p>
+                  {returnRecord.variantTitle && (
+                    <p className="text-xs text-[#78716C] mt-0.5">{returnRecord.variantTitle}</p>
+                  )}
+                  {returnRecord.sku && (
+                    <p className="text-xs text-[#78716C]">SKU: {returnRecord.sku}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs uppercase tracking-wide text-[#78716C] font-semibold mb-1">
-                  Motiv retur
+                  {returnRecord.returnType === 'CANCELLATION' ? 'Tip cerere' : 'Motiv retur'}
                 </p>
-                <p className="text-sm text-[#1C1917]">{returnRecord.reason}</p>
+                <p className="text-sm text-[#1C1917]">
+                  {returnRecord.returnType === 'CANCELLATION' ? 'Anulare Comandă' : returnRecord.reason}
+                </p>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wide text-[#78716C] font-semibold mb-1">
-                  Metodă rambursare
+                  Metodă
                 </p>
                 <p className="text-sm text-[#1C1917]">
                   {returnRecord.returnType === 'REFUND'
                     ? 'Ramburs (Cont Bancar)'
-                    : 'Schimb produs'}
+                    : returnRecord.returnType === 'EXCHANGE'
+                    ? 'Schimb produs'
+                    : 'Anulare Comandă'}
                 </p>
               </div>
             </div>
@@ -156,7 +177,7 @@ export default async function ReturnDetailPage({
               ibanHolder: returnRecord.ibanHolder,
               adminNotes: returnRecord.adminNotes,
               status: returnRecord.status,
-              returnType: returnRecord.returnType,
+              returnType: returnRecord.returnType as 'REFUND' | 'EXCHANGE' | 'CANCELLATION',
             }}
           />
         </div>

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { sendAdminReturnNotification, sendCustomerReturnConfirmation } from '@/lib/email'
+import {
+  sendAdminReturnNotification,
+  sendCustomerReturnConfirmation,
+  sendAdminCancellationNotification,
+  sendCustomerCancellationConfirmation,
+} from '@/lib/email'
 
 // NOTE: In-memory rate limiter — resets on process restart/redeploy.
 // Suitable for Phase 1 single-instance deployment on Railway.
@@ -18,7 +23,6 @@ function checkRateLimit(ip: string): boolean {
   if (record.count >= 10) return false
   record.count++
 
-  // Cleanup expired entries every 100 calls
   if (submitRateLimitMap.size > 1000) {
     const now2 = Date.now()
     for (const [key, val] of submitRateLimitMap.entries()) {
@@ -35,15 +39,16 @@ const schema = z.object({
   shopifyOrderId: z.string().min(1),
   customerName: z.string().min(1),
   customerEmail: z.string().email().optional().or(z.literal('')),
-  returnType: z.enum(['REFUND', 'EXCHANGE']),
-  productTitle: z.string().min(1),
+  returnType: z.enum(['REFUND', 'EXCHANGE', 'CANCELLATION']),
+  productTitle: z.string().optional().nullable(),
   productId: z.string().optional().nullable(),
   variantTitle: z.string().optional().nullable(),
   sku: z.string().optional().nullable(),
-  reason: z.string().min(5),
+  reason: z.string().optional().nullable(),
   awbNumber: z.string().optional().nullable(),
   iban: z.string().optional().nullable(),
   ibanHolder: z.string().optional().nullable(),
+  cancellationEligible: z.boolean().optional().nullable(),
 })
 
 export async function POST(request: NextRequest) {
@@ -66,19 +71,26 @@ export async function POST(request: NextRequest) {
 
   const data = parsed.data
 
-  // Validate orgId exists
+  // Validate required fields based on return type
+  if (data.returnType !== 'CANCELLATION') {
+    if (!data.productTitle || !data.reason || data.reason.length < 5) {
+      return NextResponse.json({ error: 'Date invalide pentru cererea de retur.' }, { status: 400 })
+    }
+  }
+
   const org = await db.organization.findUnique({ where: { id: data.orgId } })
   if (!org) {
     return NextResponse.json({ error: 'Organizație invalidă' }, { status: 400 })
   }
 
-  // Find the order in DB to get the orderId
   const order = await db.order.findFirst({
     where: {
       organizationId: data.orgId,
       shopifyOrderId: data.shopifyOrderId,
     },
   })
+
+  const isCancellation = data.returnType === 'CANCELLATION'
 
   const returnRecord = await db.return.create({
     data: {
@@ -89,35 +101,50 @@ export async function POST(request: NextRequest) {
       customerName: data.customerName,
       customerEmail: data.customerEmail || null,
       returnType: data.returnType,
-      productTitle: data.productTitle,
+      productTitle: isCancellation ? (data.productTitle || 'Anulare Comandă') : data.productTitle!,
       productId: data.productId ?? null,
       variantTitle: data.variantTitle ?? null,
       sku: data.sku ?? null,
-      reason: data.reason,
+      reason: isCancellation ? (data.reason || 'Anulare Comandă') : data.reason!,
       awbNumber: data.awbNumber ?? null,
       iban: data.iban ?? null,
       ibanHolder: data.ibanHolder ?? null,
+      cancellationEligible: isCancellation ? (data.cancellationEligible ?? null) : null,
     },
   })
 
-  // Send notifications (non-blocking)
-  const emailData = {
-    returnId: returnRecord.id,
-    orderNumber: data.orderNumber,
-    customerName: data.customerName,
-    customerEmail: data.customerEmail || undefined,
-    productTitle: data.productTitle,
-    variantTitle: data.variantTitle ?? undefined,
-    returnType: data.returnType,
-    reason: data.reason,
-    awbNumber: data.awbNumber ?? undefined,
-    iban: data.iban ?? undefined,
-    ibanHolder: data.ibanHolder ?? undefined,
-  }
+  const customerEmail = data.customerEmail || undefined
 
-  void sendAdminReturnNotification(emailData)
-  if (data.customerEmail) {
-    void sendCustomerReturnConfirmation(emailData)
+  if (isCancellation) {
+    const cancellationData = {
+      returnId: returnRecord.id,
+      orderNumber: data.orderNumber,
+      customerName: data.customerName,
+      customerEmail,
+      cancellationEligible: data.cancellationEligible ?? false,
+    }
+    void sendAdminCancellationNotification(cancellationData)
+    if (customerEmail && data.cancellationEligible) {
+      void sendCustomerCancellationConfirmation(cancellationData)
+    }
+  } else {
+    const emailData = {
+      returnId: returnRecord.id,
+      orderNumber: data.orderNumber,
+      customerName: data.customerName,
+      customerEmail,
+      productTitle: data.productTitle!,
+      variantTitle: data.variantTitle ?? undefined,
+      returnType: data.returnType as 'REFUND' | 'EXCHANGE',
+      reason: data.reason!,
+      awbNumber: data.awbNumber ?? undefined,
+      iban: data.iban ?? undefined,
+      ibanHolder: data.ibanHolder ?? undefined,
+    }
+    void sendAdminReturnNotification(emailData)
+    if (customerEmail) {
+      void sendCustomerReturnConfirmation(emailData)
+    }
   }
 
   return NextResponse.json({ id: returnRecord.id, orderNumber: data.orderNumber }, { status: 201 })

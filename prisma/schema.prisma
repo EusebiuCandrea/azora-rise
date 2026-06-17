@@ -792,9 +792,10 @@ model Return {
   awbNumber      String?
   iban           String?
   ibanHolder     String?
-  status         ReturnStatus @default(NEW)
-  adminNotes     String?
-  createdAt      DateTime     @default(now())
+  status               ReturnStatus @default(NEW)
+  adminNotes           String?
+  cancellationEligible Boolean?
+  createdAt            DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
   @@index([organizationId])
@@ -806,6 +807,7 @@ model Return {
 enum ReturnType {
   REFUND
   EXCHANGE
+  CANCELLATION
 }
 
 enum ReturnStatus {

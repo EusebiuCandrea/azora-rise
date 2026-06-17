@@ -42,6 +42,7 @@ export function ReturnsFilters({
         <option value="">Toate Tipurile</option>
         <option value="REFUND">Ramburs</option>
         <option value="EXCHANGE">Schimb</option>
+        <option value="CANCELLATION">Anulare</option>
       </select>
       {(currentStatus || currentType) && (
         <button

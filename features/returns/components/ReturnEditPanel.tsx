@@ -22,7 +22,7 @@ interface Props {
     ibanHolder: string | null
     adminNotes: string | null
     status: ReturnStatus
-    returnType: 'REFUND' | 'EXCHANGE'
+    returnType: 'REFUND' | 'EXCHANGE' | 'CANCELLATION'
   }
 }
 
