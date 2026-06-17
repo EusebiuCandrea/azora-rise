@@ -38,7 +38,7 @@ const schema = z.object({
   orderNumber: z.string().min(1),
   shopifyOrderId: z.string().min(1),
   customerName: z.string().min(1),
-  customerEmail: z.string().email().optional().or(z.literal('')),
+  customerEmail: z.union([z.string().email(), z.literal(''), z.null()]).optional(),
   returnType: z.enum(['REFUND', 'EXCHANGE', 'CANCELLATION']),
   productTitle: z.string().optional().nullable(),
   productId: z.string().optional().nullable(),
