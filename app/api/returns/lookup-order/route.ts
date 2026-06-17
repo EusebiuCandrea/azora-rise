@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { db } from '@/lib/db'
+import { decrypt } from '@/lib/crypto'
 
 // NOTE: In-memory rate limiter — resets on process restart/redeploy.
-// Suitable for Phase 1 single-instance deployment on Railway.
-// For multi-instance deployments, replace with Redis/Upstash.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
@@ -17,7 +16,6 @@ function checkRateLimit(ip: string, maxRequests: number, windowMs: number): bool
   if (record.count >= maxRequests) return false
   record.count++
 
-  // Cleanup expired entries every 100 calls
   if (rateLimitMap.size > 1000) {
     const now2 = Date.now()
     for (const [key, val] of rateLimitMap.entries()) {
@@ -52,6 +50,7 @@ export async function GET(request: NextRequest) {
 
   const { orderNumber, orgId } = result.data
 
+  // 1. Try Rise DB first (fast path)
   const order = await db.order.findFirst({
     where: {
       organizationId: orgId,
@@ -70,28 +69,121 @@ export async function GET(request: NextRequest) {
     },
   })
 
-  if (!order) {
+  if (order) {
+    const shopifyData = order.shopifyData as Record<string, unknown> | null
+    const customerName =
+      (shopifyData?.customer as Record<string, unknown> | null)?.displayName as string
+      ?? (shopifyData?.billingAddress as Record<string, unknown> | null)?.name as string
+      ?? order.email
+      ?? 'Client'
+
+    return NextResponse.json({
+      customerName,
+      customerEmail: order.email,
+      shopifyOrderId: order.shopifyOrderId,
+      fulfillmentStatus: order.fulfillmentStatus,
+      orderItems: order.items.map((item) => ({
+        shopifyProductId: item.shopifyProductId,
+        productId: item.productId,
+        productTitle: item.title,
+        variantTitle: item.variantTitle,
+        sku: item.sku,
+      })),
+    })
+  }
+
+  // 2. Fallback: query Shopify API directly (order not synced yet to Rise DB)
+  const connection = await db.shopifyConnection.findUnique({
+    where: { organizationId: orgId },
+  })
+
+  if (!connection) {
     return NextResponse.json({ error: 'Comanda nu a fost găsită' }, { status: 404 })
   }
 
-  // Extract customer name from shopifyData if available
-  const shopifyData = order.shopifyData as Record<string, unknown> | null
-  const customerName = (shopifyData?.customer as Record<string, unknown> | null)?.displayName as string
-    ?? (shopifyData?.billingAddress as Record<string, unknown> | null)?.name as string
-    ?? order.email
+  try {
+    const shopifyResult = await fetchOrderFromShopify(
+      connection.shopDomain,
+      connection.accessTokenEncrypted,
+      orderNumber,
+    )
+
+    if (!shopifyResult) {
+      return NextResponse.json({ error: 'Comanda nu a fost găsită' }, { status: 404 })
+    }
+
+    return NextResponse.json(shopifyResult)
+  } catch (err) {
+    console.error('[lookup-order] Shopify fallback error:', err)
+    return NextResponse.json({ error: 'Comanda nu a fost găsită' }, { status: 404 })
+  }
+}
+
+interface ShopifyOrderRaw {
+  id: number
+  order_number: number
+  email: string | null
+  financial_status: string
+  fulfillment_status: string | null
+  billing_address: { name?: string } | null
+  customer: { first_name?: string; last_name?: string } | null
+  line_items: {
+    product_id: number | null
+    title: string
+    variant_title: string | null
+    sku: string | null
+  }[]
+}
+
+async function fetchOrderFromShopify(
+  shopDomain: string,
+  accessTokenEncrypted: string,
+  orderNumber: string,
+) {
+  const accessToken = decrypt(accessTokenEncrypted)
+
+  const params = new URLSearchParams({
+    name: `#${orderNumber}`,
+    status: 'any',
+    limit: '1',
+    fields: 'id,order_number,email,financial_status,fulfillment_status,line_items,billing_address,customer',
+  })
+
+  const res = await fetch(
+    `https://${shopDomain}/admin/api/2025-01/orders.json?${params}`,
+    {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  if (!res.ok) return null
+
+  const data = await res.json() as { orders: ShopifyOrderRaw[] }
+  const o = data.orders?.[0]
+  if (!o) return null
+
+  const customerName =
+    (o.customer?.first_name || o.customer?.last_name
+      ? `${o.customer.first_name ?? ''} ${o.customer.last_name ?? ''}`.trim()
+      : null)
+    ?? o.billing_address?.name
+    ?? o.email
     ?? 'Client'
 
-  return NextResponse.json({
+  return {
     customerName,
-    customerEmail: order.email,
-    shopifyOrderId: order.shopifyOrderId,
-    fulfillmentStatus: order.fulfillmentStatus,
-    orderItems: order.items.map((item) => ({
-      shopifyProductId: item.shopifyProductId,
-      productId: item.productId,
+    customerEmail: o.email || null,
+    shopifyOrderId: String(o.id),
+    fulfillmentStatus: o.fulfillment_status ?? null,
+    orderItems: (o.line_items ?? []).map((item) => ({
+      shopifyProductId: item.product_id ? String(item.product_id) : '',
+      productId: null as string | null,
       productTitle: item.title,
-      variantTitle: item.variantTitle,
-      sku: item.sku,
+      variantTitle: item.variant_title || null,
+      sku: item.sku || null,
     })),
-  })
+  }
 }
